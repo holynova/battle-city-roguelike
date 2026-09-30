@@ -1,14 +1,16 @@
 /**
- * UI Overlay Manager
- * Controls modern glassmorphism modal dialogs with 3D Holographic Card Tilt,
- * crisp vector badges, and zero emojis.
+ * High-Definition Military Tactical Console UI
+ * Complete departure from SaaS/web tropes:
+ * Uses chamfered armored cartridges, CRT phosphor HUDs, classified dossiers, and scene illustrations.
  */
 
 import { UpgradeChip, getRarityColor, ALL_UPGRADES } from '../roguelite/Upgrades';
 import { playerInventory } from '../roguelite/Inventory';
 import { campaignMap, MapNode } from '../roguelite/CampaignMap';
 import { sounds } from '../audio/SoundEffects';
+import { bgm } from '../audio/MusicEngine';
 import { TacticalIcons } from '../graphics/TacticalIcons';
+import { GameArtwork } from '../graphics/GameArtwork';
 
 export class UIOverlay {
   private container: HTMLElement;
@@ -22,6 +24,18 @@ export class UIOverlay {
     }
     this.container = el;
     this.injectStyles();
+    this.setupAudioToggle();
+  }
+
+  private setupAudioToggle() {
+    const btn = document.getElementById('audio-toggle-btn');
+    if (btn) {
+      btn.addEventListener('click', () => {
+        const isEnabled = bgm.toggleMute();
+        btn.textContent = isEnabled ? '🔊 BGM: ON' : '🔇 BGM: OFF';
+        btn.style.color = isEnabled ? '#38bdf8' : '#94a3b8';
+      });
+    }
   }
 
   private injectStyles() {
@@ -37,234 +51,298 @@ export class UIOverlay {
         display: flex;
         align-items: center;
         justify-content: center;
-        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+        font-family: 'Chakra Petch', -apple-system, sans-serif;
         color: #f8fafc;
         user-select: none;
       }
-      .modal-backdrop {
+      .terminal-backdrop {
         position: absolute;
         inset: 0;
-        background: radial-gradient(circle at center, rgba(15, 23, 42, 0.82) 0%, rgba(6, 9, 17, 0.95) 100%);
-        backdrop-filter: blur(12px);
+        background: radial-gradient(circle at center, rgba(6, 11, 25, 0.88) 0%, rgba(2, 4, 10, 0.98) 100%);
+        backdrop-filter: blur(14px);
         display: flex;
         flex-direction: column;
         align-items: center;
         justify-content: center;
         pointer-events: auto;
-        animation: fadeIn 0.25s ease-out;
+        animation: consoleBoot 0.22s ease-out;
       }
-      @keyframes fadeIn {
-        from { opacity: 0; transform: scale(0.97); }
+      @keyframes consoleBoot {
+        from { opacity: 0; transform: scale(0.98); }
         to { opacity: 1; transform: scale(1); }
       }
-      .modal-box {
-        max-width: 920px;
-        width: 92%;
-        background: linear-gradient(180deg, rgba(24, 34, 53, 0.95) 0%, rgba(13, 19, 33, 0.98) 100%);
-        border: 1px solid rgba(56, 189, 248, 0.35);
-        border-radius: 20px;
-        box-shadow: 0 30px 60px -12px rgba(0, 0, 0, 0.8), 0 0 40px rgba(56, 189, 248, 0.18);
-        padding: 32px;
+      /* Heavy Armored Military Box with 45° Chamfered Corners */
+      .armored-chassis {
+        max-width: 940px;
+        width: 94%;
+        background: linear-gradient(180deg, #18202f 0%, #0d131f 100%);
+        border: 2px solid #38bdf8;
+        clip-path: polygon(
+          20px 0%, calc(100% - 20px) 0%, 100% 20px,
+          100% calc(100% - 20px), calc(100% - 20px) 100%, 20px 100%,
+          0% calc(100% - 20px), 0% 20px
+        );
+        box-shadow: 0 40px 80px rgba(0, 0, 0, 0.9), 0 0 35px rgba(56, 189, 248, 0.25);
+        padding: 30px;
         text-align: center;
         position: relative;
-        overflow: hidden;
       }
-      /* Top metallic decorative rivets */
-      .modal-box::before {
-        content: '';
-        position: absolute;
-        top: 0; left: 0; right: 0; height: 3px;
-        background: linear-gradient(90deg, transparent, #38bdf8, transparent);
+      /* Industrial Top Header Stripe */
+      .chassis-header-bar {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        border-bottom: 2px solid rgba(56, 189, 248, 0.3);
+        padding-bottom: 12px;
+        margin-bottom: 20px;
+        font-family: 'Share Tech Mono', monospace;
+        font-size: 13px;
+        color: #38bdf8;
+        letter-spacing: 2px;
       }
-      .modal-title {
-        font-size: 26px;
+      .chassis-header-bar .warning-tag {
+        background: #ef4444;
+        color: #ffffff;
+        font-weight: 700;
+        padding: 2px 8px;
+        clip-path: polygon(6px 0%, 100% 0%, calc(100% - 6px) 100%, 0% 100%);
+      }
+      .console-main-title {
+        font-size: 30px;
         font-weight: 800;
-        letter-spacing: 1px;
-        margin-bottom: 6px;
+        letter-spacing: 2px;
+        text-transform: uppercase;
         color: #f8fafc;
         display: flex;
         align-items: center;
         justify-content: center;
-        gap: 12px;
+        gap: 14px;
+        text-shadow: 0 0 15px rgba(56, 189, 248, 0.4);
       }
-      .modal-subtitle {
+      .console-sub-title {
         font-size: 14px;
         color: #94a3b8;
-        margin-bottom: 28px;
+        font-family: 'Share Tech Mono', monospace;
+        letter-spacing: 1px;
+        margin-top: 4px;
+        margin-bottom: 24px;
       }
-      /* 3D Holographic Tilt Cards Grid */
-      .cards-grid {
+
+      /* -----------------------------------------------------------
+         PHYSICAL ARMORED CARTRIDGES (Three-Pick-One Overhaul)
+      ----------------------------------------------------------- */
+      .cartridges-rack {
         display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-        gap: 22px;
-        margin-bottom: 20px;
-        perspective: 1000px;
+        grid-template-columns: repeat(auto-fit, minmax(255px, 1fr));
+        gap: 24px;
+        margin-bottom: 18px;
+        perspective: 1200px;
       }
-      .upgrade-card-wrapper {
-        perspective: 1000px;
+      .cartridge-wrapper {
+        perspective: 1200px;
       }
-      .upgrade-card {
-        background: linear-gradient(145deg, rgba(30, 41, 59, 0.85) 0%, rgba(15, 23, 42, 0.95) 100%);
-        border-radius: 16px;
-        padding: 26px 20px;
+      .mod-cartridge {
+        background: linear-gradient(165deg, #1e293b 0%, #0f172a 70%, #020617 100%);
+        clip-path: polygon(
+          14px 0%, calc(100% - 14px) 0%, 100% 14px,
+          100% calc(100% - 14px), calc(100% - 14px) 100%, 14px 100%,
+          0% calc(100% - 14px), 0% 14px
+        );
+        border: 2px solid var(--border-color, #475569);
+        padding: 24px 18px 20px;
         cursor: pointer;
-        transition: transform 0.15s ease-out, box-shadow 0.2s ease;
+        transition: transform 0.18s ease-out, box-shadow 0.2s ease, border-color 0.2s;
         display: flex;
         flex-direction: column;
         align-items: center;
         position: relative;
-        overflow: hidden;
         transform-style: preserve-3d;
-        border: 2px solid rgba(255, 255, 255, 0.1);
+        box-shadow: 0 10px 25px rgba(0, 0, 0, 0.6);
       }
-      .upgrade-card:hover {
-        box-shadow: 0 20px 40px rgba(0, 0, 0, 0.7), 0 0 25px var(--glow-color, rgba(56, 189, 248, 0.4));
+      .mod-cartridge:hover {
+        border-color: var(--highlight-color, #38bdf8);
+        box-shadow: 0 25px 50px rgba(0, 0, 0, 0.8), 0 0 30px var(--highlight-color, rgba(56, 189, 248, 0.4));
       }
-      /* Holographic light sheen reflection */
-      .card-sheen {
-        position: absolute;
-        inset: 0;
-        pointer-events: none;
-        background: radial-gradient(circle at var(--mouse-x, 50%) var(--mouse-y, 50%), rgba(255, 255, 255, 0.18) 0%, transparent 65%);
-        opacity: 0;
-        transition: opacity 0.2s;
-        border-radius: 16px;
+      /* Top Brass Gold Connector Pins */
+      .cartridge-pins {
+        display: flex;
+        gap: 6px;
+        margin-bottom: 12px;
       }
-      .upgrade-card:hover .card-sheen {
-        opacity: 1;
+      .cartridge-pin {
+        width: 8px;
+        height: 6px;
+        background: #facc15;
+        border-radius: 1px;
       }
-      .card-rarity {
+      /* Stenciled Serial Code */
+      .cartridge-serial {
+        font-family: 'Share Tech Mono', monospace;
         font-size: 11px;
-        font-weight: 800;
-        text-transform: uppercase;
         letter-spacing: 1.5px;
-        padding: 4px 12px;
-        border-radius: 999px;
+        color: #64748b;
+        margin-bottom: 10px;
+      }
+      .cartridge-rarity-badge {
+        font-family: 'Share Tech Mono', monospace;
+        font-size: 11px;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 2px;
+        padding: 3px 12px;
+        clip-path: polygon(6px 0%, 100% 0%, calc(100% - 6px) 100%, 0% 100%);
         margin-bottom: 16px;
       }
-      .card-icon-wrapper {
+      .cartridge-schematic {
         margin-bottom: 14px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        filter: drop-shadow(0 4px 12px rgba(0, 0, 0, 0.5));
+        filter: drop-shadow(0 6px 14px rgba(0, 0, 0, 0.6));
       }
-      .card-name {
-        font-size: 17px;
+      .cartridge-title {
+        font-size: 18px;
         font-weight: 700;
-        margin-bottom: 8px;
         color: #ffffff;
+        letter-spacing: 1px;
+        margin-bottom: 8px;
       }
-      .card-desc {
+      .cartridge-desc {
         font-size: 13px;
         color: #cbd5e1;
-        line-height: 1.5;
-        margin-top: 4px;
+        line-height: 1.55;
+        font-family: 'Chakra Petch', sans-serif;
       }
-      /* Map View */
-      .map-container {
+
+      /* -----------------------------------------------------------
+         TACTICAL WAR ROOM MAP OVERHAUL
+      ----------------------------------------------------------- */
+      .war-table-canvas-wrap {
+        position: relative;
+        margin: 0 auto;
+        border: 2px solid #38bdf8;
+        clip-path: polygon(
+          12px 0%, calc(100% - 12px) 0%, 100% 12px,
+          100% calc(100% - 12px), calc(100% - 12px) 100%, 12px 100%,
+          0% calc(100% - 12px), 0% 12px
+        );
+        overflow: hidden;
+      }
+      .war-table-nodes-layer {
+        position: absolute;
+        inset: 0;
+        display: flex;
+        flex-direction: column;
+        justify-content: space-around;
+        padding: 24px 0;
+      }
+      .war-table-row {
+        display: flex;
+        justify-content: center;
+        gap: 60px;
+      }
+      .tactical-node-badge {
+        width: 76px;
+        height: 76px;
+        clip-path: polygon(
+          12px 0%, calc(100% - 12px) 0%, 100% 12px,
+          100% calc(100% - 12px), calc(100% - 12px) 100%, 12px 100%,
+          0% calc(100% - 12px), 0% 12px
+        );
+        background: rgba(15, 23, 42, 0.92);
+        border: 2px solid #334155;
         display: flex;
         flex-direction: column;
         align-items: center;
-        gap: 22px;
-        padding: 16px 0;
-      }
-      .map-floor-row {
-        display: flex;
-        gap: 48px;
         justify-content: center;
-      }
-      .map-node-btn {
-        width: 72px;
-        height: 72px;
-        border-radius: 50%;
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        justify-content: center;
-        background: #111827;
-        border: 2px solid #374151;
         cursor: not-allowed;
         opacity: 0.35;
         transition: all 0.22s;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.7);
       }
-      .map-node-btn.available {
+      .tactical-node-badge.available {
         cursor: pointer;
         opacity: 1;
         border-color: #22c55e;
-        box-shadow: 0 0 20px rgba(34, 197, 94, 0.45);
-        transform: scale(1.1);
-        animation: pulseGreen 1.6s infinite;
+        box-shadow: 0 0 25px rgba(34, 197, 94, 0.6);
+        transform: scale(1.12);
+        animation: radarPulse 1.6s infinite;
       }
-      .map-node-btn.visited {
-        opacity: 0.25;
-        border-color: #4b5563;
-      }
-      .map-node-btn.current {
+      .tactical-node-badge.current {
         border-color: #38bdf8;
-        box-shadow: 0 0 16px rgba(56, 189, 248, 0.6);
+        box-shadow: 0 0 22px rgba(56, 189, 248, 0.7);
       }
-      .map-node-label {
+      .tactical-node-label {
+        font-family: 'Share Tech Mono', monospace;
         font-size: 11px;
         font-weight: 700;
-        margin-top: 3px;
         color: #f1f5f9;
-        letter-spacing: 0.5px;
+        margin-top: 4px;
+        letter-spacing: 1px;
       }
-      @keyframes pulseGreen {
-        0%, 100% { transform: scale(1.1); box-shadow: 0 0 15px rgba(34, 197, 94, 0.4); }
-        50% { transform: scale(1.16); box-shadow: 0 0 28px rgba(34, 197, 94, 0.85); }
+      @keyframes radarPulse {
+        0%, 100% { transform: scale(1.12); box-shadow: 0 0 18px rgba(34, 197, 94, 0.5); }
+        50% { transform: scale(1.18); box-shadow: 0 0 35px rgba(34, 197, 94, 0.9); }
       }
-      /* Buttons */
-      .btn-primary {
-        background: linear-gradient(135deg, #0284c7 0%, #0369a1 100%);
-        color: white;
-        border: 1px solid #38bdf8;
-        border-radius: 12px;
-        padding: 13px 32px;
-        font-size: 15px;
+
+      /* -----------------------------------------------------------
+         MECHANICAL INDUSTRIAL BUTTONS
+      ----------------------------------------------------------- */
+      .mech-btn-primary {
+        background: linear-gradient(180deg, #0284c7 0%, #0369a1 100%);
+        border: 2px solid #38bdf8;
+        clip-path: polygon(
+          10px 0%, calc(100% - 10px) 0%, 100% 10px,
+          100% calc(100% - 10px), calc(100% - 10px) 100%, 10px 100%,
+          0% calc(100% - 10px), 0% 10px
+        );
+        color: #ffffff;
+        font-family: 'Chakra Petch', sans-serif;
+        font-size: 17px;
         font-weight: 700;
+        letter-spacing: 1.5px;
+        padding: 14px 38px;
         cursor: pointer;
         transition: all 0.2s;
         box-shadow: 0 6px 20px rgba(2, 132, 199, 0.45);
       }
-      .btn-primary:hover {
-        background: linear-gradient(135deg, #0369a1 0%, #075985 100%);
+      .mech-btn-primary:hover {
+        background: linear-gradient(180deg, #0369a1 0%, #075985 100%);
         transform: translateY(-2px);
-        box-shadow: 0 8px 25px rgba(2, 132, 199, 0.6);
+        box-shadow: 0 10px 30px rgba(2, 132, 199, 0.7);
       }
-      .btn-secondary {
+      .mech-btn-primary:active {
+        transform: translateY(1px);
+      }
+      .mech-btn-secondary {
         background: #1e293b;
-        color: #f8fafc;
         border: 1px solid #475569;
-        border-radius: 10px;
-        padding: 10px 22px;
+        clip-path: polygon(
+          8px 0%, calc(100% - 8px) 0%, 100% 8px,
+          100% calc(100% - 8px), calc(100% - 8px) 100%, 8px 100%,
+          0% calc(100% - 8px), 0% 8px
+        );
+        color: #f8fafc;
+        font-family: 'Share Tech Mono', monospace;
         font-size: 14px;
-        font-weight: 600;
+        font-weight: 700;
+        padding: 10px 22px;
         cursor: pointer;
         transition: all 0.2s;
       }
-      .btn-secondary:hover {
+      .mech-btn-secondary:hover {
         background: #334155;
-        border-color: #94a3b8;
+        border-color: #38bdf8;
       }
-      /* Shop item */
-      .shop-item {
-        background: rgba(30, 41, 59, 0.7);
-        border: 1px solid rgba(255, 255, 255, 0.1);
-        border-radius: 14px;
-        padding: 16px 22px;
+
+      /* Military Armory / Shop Item */
+      .armory-row {
+        background: rgba(15, 23, 42, 0.85);
+        border: 1px solid #334155;
+        clip-path: polygon(10px 0%, 100% 0%, calc(100% - 10px) 100%, 0% 100%);
+        padding: 14px 24px;
         display: flex;
         align-items: center;
         justify-content: space-between;
         margin-bottom: 14px;
         text-align: left;
-        gap: 16px;
-      }
-      .shop-item-left {
-        display: flex;
-        align-items: center;
-        gap: 16px;
       }
     `;
     document.head.appendChild(style);
@@ -275,81 +353,57 @@ export class UIOverlay {
   }
 
   // -------------------------------------------------------------
-  // CARD SELECTION MODAL (Three-Pick-One Roguelite Draft)
+  // 1. TITLE SCREEN WITH CINEMATIC BATTLEFIELD COVER ART
   // -------------------------------------------------------------
-  public showCardDraft(onSelect: (chip: UpgradeChip) => void) {
-    sounds.playVictory();
-    const choices = playerInventory.getRandomChoices(3);
+  public showStartMenu(onStart: () => void) {
+    bgm.playTrack('briefing');
 
     const backdrop = document.createElement('div');
-    backdrop.className = 'modal-backdrop';
+    backdrop.className = 'terminal-backdrop';
 
     const box = document.createElement('div');
-    box.className = 'modal-box';
+    box.className = 'armored-chassis';
 
     box.innerHTML = `
-      <div class="modal-title">
-        ${TacticalIcons.getEagleLogo(30)}
-        <span>战地整备：三选一科技改装</span>
-        ${TacticalIcons.getEagleLogo(30)}
+      <div class="chassis-header-bar">
+        <div>SYS // TACTICAL COMMAND MK-IV</div>
+        <div class="warning-tag">DEFCON-1 ENGAGED</div>
       </div>
-      <div class="modal-subtitle">从击破敌军核心拆解的原型配件中挑选一件强化你的战车</div>
-      <div class="cards-grid" id="cards-container"></div>
+
+      <div id="title-cover-canvas-box" style="margin-bottom: 20px; border: 2px solid #38bdf8; clip-path: polygon(14px 0%, calc(100% - 14px) 0%, 100% 14px, 100% calc(100% - 14px), calc(100% - 14px) 100%, 14px 100%, 0% calc(100% - 14px), 0% 14px);"></div>
+
+      <div class="console-main-title">
+        ${TacticalIcons.getEagleLogo(36)}
+        <span>钢铁誓约：重装肉鸽坦克</span>
+        ${TacticalIcons.getEagleLogo(36)}
+      </div>
+      <div class="console-sub-title">
+        BATTLE CITY : ROGUE BASTION // 4K RETINA VECTOR × CHIP-TREE ROGUELITE
+      </div>
+
+      <div style="background: rgba(15, 23, 42, 0.75); border: 1px solid rgba(56, 189, 248, 0.25); clip-path: polygon(10px 0%, 100% 0%, calc(100% - 10px) 100%, 0% 100%); padding: 18px 24px; text-align: left; max-width: 640px; margin: 0 auto 24px; font-size: 13.5px; line-height: 1.8;">
+        <span style="color: #facc15; font-weight: 700; font-family: 'Share Tech Mono', monospace;">[ 战车火控中枢指南 ]</span><br/>
+        • <b>WASD / 方向键</b>：战车底盘机动行驶（具有差速履带印痕与物理惯性）<br/>
+        • <b>鼠标指针</b>：独立 360° 炮塔自由瞄准 · <b>左键 / 空格</b>：主炮高爆开火<br/>
+        • <b>Shift / 右键</b>：喷气超燃冲刺（瞬时无敌突进） · <b>老鹰基地</b>：附带能量屏障与自动近防炮
+      </div>
+
+      <button class="mech-btn-primary" id="btn-deploy-run">
+        启动引擎 · 投入战役 (START CAMPAIGN)
+      </button>
     `;
 
-    const grid = box.querySelector('#cards-container')!;
+    // Embed procedural cover canvas
+    const coverCanvas = GameArtwork.getTitleCoverArt(720, 240);
+    coverCanvas.style.display = 'block';
+    coverCanvas.style.width = '100%';
+    coverCanvas.style.height = 'auto';
+    box.querySelector('#title-cover-canvas-box')!.appendChild(coverCanvas);
 
-    choices.forEach((chip) => {
-      const wrapper = document.createElement('div');
-      wrapper.className = 'upgrade-card-wrapper';
-
-      const card = document.createElement('div');
-      card.className = 'upgrade-card';
-      const rColor = getRarityColor(chip.rarity);
-      card.style.borderColor = rColor;
-      card.style.setProperty('--glow-color', `${rColor}66`);
-
-      card.innerHTML = `
-        <div class="card-sheen"></div>
-        <span class="card-rarity" style="background: ${rColor}22; color: ${rColor}; border: 1px solid ${rColor}">
-          ${chip.rarity.toUpperCase()}
-        </span>
-        <div class="card-icon-wrapper">
-          ${TacticalIcons.getChipIcon(chip.id, 64)}
-        </div>
-        <div class="card-name">${chip.nameZh}</div>
-        <div class="card-desc">${chip.descriptionZh}</div>
-      `;
-
-      // 3D Card Tilt Mouse Physics
-      card.addEventListener('mousemove', (e: MouseEvent) => {
-        const rect = card.getBoundingClientRect();
-        const x = e.clientX - rect.left;
-        const y = e.clientY - rect.top;
-        const centerX = rect.width / 2;
-        const centerY = rect.height / 2;
-
-        const rotateX = ((y - centerY) / centerY) * -12;
-        const rotateY = ((x - centerX) / centerX) * 12;
-
-        card.style.transform = `perspective(1000px) rotateX(${rotateX}deg) rotateY(${rotateY}deg) scale3d(1.04, 1.04, 1.04)`;
-        card.style.setProperty('--mouse-x', `${(x / rect.width) * 100}%`);
-        card.style.setProperty('--mouse-y', `${(y / rect.height) * 100}%`);
-      });
-
-      card.addEventListener('mouseleave', () => {
-        card.style.transform = 'perspective(1000px) rotateX(0deg) rotateY(0deg) scale3d(1, 1, 1)';
-      });
-
-      card.onclick = () => {
-        sounds.playPowerup();
-        playerInventory.addChip(chip.id);
-        this.clear();
-        onSelect(chip);
-      };
-
-      wrapper.appendChild(card);
-      grid.appendChild(wrapper);
+    box.querySelector('#btn-deploy-run')!.addEventListener('click', () => {
+      sounds.playPowerup();
+      this.clear();
+      onStart();
     });
 
     backdrop.appendChild(box);
@@ -357,38 +411,144 @@ export class UIOverlay {
   }
 
   // -------------------------------------------------------------
-  // STRATEGIC CAMPAIGN MAP MODAL
+  // 2. THREE-PICK-ONE ARMORED MOD CARTRIDGES DRAFT
   // -------------------------------------------------------------
-  public showCampaignMap(onNodeSelected: (node: MapNode) => void) {
+  public showCardDraft(onSelect: (chip: UpgradeChip) => void) {
+    bgm.playTrack('briefing');
+    sounds.playVictory();
+    const choices = playerInventory.getRandomChoices(3);
+
     const backdrop = document.createElement('div');
-    backdrop.className = 'modal-backdrop';
+    backdrop.className = 'terminal-backdrop';
 
     const box = document.createElement('div');
-    box.className = 'modal-box';
+    box.className = 'armored-chassis';
 
     box.innerHTML = `
-      <div class="modal-title">
-        <span>战役行进全景战略图 (WAR ROOM)</span>
+      <div class="chassis-header-bar">
+        <div>LOG // SALVAGE BLUEPRINT ACQUIRED</div>
+        <div class="warning-tag" style="background: #22c55e;">SELECT 1 REINFORCEMENT</div>
       </div>
-      <div class="modal-subtitle">分析战场情报，选择前进战区，突破防线直逼敌军核心要塞</div>
-      <div class="map-container" id="map-tree"></div>
+
+      <div class="console-main-title">
+        ${TacticalIcons.getEagleLogo(32)}
+        <span>战备整备：装甲模块配件加装</span>
+        ${TacticalIcons.getEagleLogo(32)}
+      </div>
+      <div class="console-sub-title">从击溃敌军核心回收的高规原型芯片中，挑选一件装载至战车卡槽</div>
+      <div class="cartridges-rack" id="cartridges-box"></div>
     `;
 
-    const mapTree = box.querySelector('#map-tree')!;
+    const rack = box.querySelector('#cartridges-box')!;
 
+    choices.forEach((chip, idx) => {
+      const wrapper = document.createElement('div');
+      wrapper.className = 'cartridge-wrapper';
+
+      const cart = document.createElement('div');
+      cart.className = 'mod-cartridge';
+      const rColor = getRarityColor(chip.rarity);
+      cart.style.setProperty('--border-color', `${rColor}88`);
+      cart.style.setProperty('--highlight-color', rColor);
+
+      cart.innerHTML = `
+        <div class="cartridge-pins">
+          <div class="cartridge-pin"></div>
+          <div class="cartridge-pin"></div>
+          <div class="cartridge-pin"></div>
+          <div class="cartridge-pin"></div>
+        </div>
+        <div class="cartridge-serial">SERIAL: MOD-${idx + 401}-${chip.rarity.toUpperCase().slice(0, 3)}</div>
+        <div class="cartridge-rarity-badge" style="background: ${rColor}33; color: ${rColor}; border: 1px solid ${rColor};">
+          ${chip.rarity.toUpperCase()} GRADE
+        </div>
+        <div class="cartridge-schematic">
+          ${TacticalIcons.getChipIcon(chip.id, 68)}
+        </div>
+        <div class="cartridge-title">${chip.nameZh}</div>
+        <div class="cartridge-desc">${chip.descriptionZh}</div>
+      `;
+
+      // 3D Card Tilt Mouse Physics
+      cart.addEventListener('mousemove', (e: MouseEvent) => {
+        const rect = cart.getBoundingClientRect();
+        const x = e.clientX - rect.left;
+        const y = e.clientY - rect.top;
+        const centerX = rect.width / 2;
+        const centerY = rect.height / 2;
+
+        const rotateX = ((y - centerY) / centerY) * -14;
+        const rotateY = ((x - centerX) / centerX) * 14;
+
+        cart.style.transform = `perspective(1000px) rotateX(${rotateX}deg) rotateY(${rotateY}deg) scale3d(1.05, 1.05, 1.05)`;
+      });
+
+      cart.addEventListener('mouseleave', () => {
+        cart.style.transform = 'perspective(1000px) rotateX(0deg) rotateY(0deg) scale3d(1, 1, 1)';
+      });
+
+      cart.onclick = () => {
+        sounds.playPowerup();
+        playerInventory.addChip(chip.id);
+        this.clear();
+        onSelect(chip);
+      };
+
+      wrapper.appendChild(cart);
+      rack.appendChild(wrapper);
+    });
+
+    backdrop.appendChild(box);
+    this.container.appendChild(backdrop);
+  }
+
+  // -------------------------------------------------------------
+  // 3. CAMPAIGN MAP (TOPOGRAPHIC WAR TABLE)
+  // -------------------------------------------------------------
+  public showCampaignMap(onNodeSelected: (node: MapNode) => void) {
+    bgm.playTrack('briefing');
+
+    const backdrop = document.createElement('div');
+    backdrop.className = 'terminal-backdrop';
+
+    const box = document.createElement('div');
+    box.className = 'armored-chassis';
+
+    box.innerHTML = `
+      <div class="chassis-header-bar">
+        <div>STRATEGIC // THEATER OF OPERATIONS</div>
+        <div class="warning-tag">SELECT SECTOR</div>
+      </div>
+
+      <div class="console-main-title">战役作战全景沙盘 (WAR ROOM)</div>
+      <div class="console-sub-title">分析等高线地势与雷达目标，选择推进战区，突破防线直逼要塞巨兽</div>
+
+      <div class="war-table-canvas-wrap" id="war-table-wrap" style="width: 760px; height: 420px;">
+        <div class="war-table-nodes-layer" id="war-table-nodes"></div>
+      </div>
+    `;
+
+    // Embed Topographic War Table Canvas as Background
+    const warTableWrap = box.querySelector('#war-table-wrap')!;
+    const warTableCanvas = GameArtwork.getTacticalWarTableBg(760, 420);
+    warTableCanvas.style.position = 'absolute';
+    warTableCanvas.style.inset = '0';
+    warTableWrap.insertBefore(warTableCanvas, warTableWrap.firstChild);
+
+    const nodesLayer = box.querySelector('#war-table-nodes')!;
+
+    // Render from Boss floor down to Floor 0
     for (let f = campaignMap.floors.length - 1; f >= 0; f--) {
       const row = document.createElement('div');
-      row.className = 'map-floor-row';
+      row.className = 'war-table-row';
 
       campaignMap.floors[f].forEach((node) => {
         const btn = document.createElement('button');
-        btn.className = `map-node-btn ${node.available ? 'available' : ''} ${node.visited ? 'visited' : ''} ${node.id === campaignMap.currentNodeId ? 'current' : ''}`;
+        btn.className = `tactical-node-badge ${node.available ? 'available' : ''} ${node.visited ? 'visited' : ''} ${node.id === campaignMap.currentNodeId ? 'current' : ''}`;
 
         btn.innerHTML = `
-          <div style="display: flex; align-items: center; justify-content: center;">
-            ${TacticalIcons.getMapNodeIcon(node.type, 32)}
-          </div>
-          <span class="map-node-label">${node.nameZh.slice(0, 4)}</span>
+          <div>${TacticalIcons.getMapNodeIcon(node.type, 32)}</div>
+          <span class="tactical-node-label">${node.nameZh.slice(0, 4)}</span>
         `;
 
         if (node.available) {
@@ -405,7 +565,7 @@ export class UIOverlay {
         row.appendChild(btn);
       });
 
-      mapTree.appendChild(row);
+      nodesLayer.appendChild(row);
     }
 
     backdrop.appendChild(box);
@@ -413,40 +573,45 @@ export class UIOverlay {
   }
 
   // -------------------------------------------------------------
-  // ARMORY SHOP MODAL
+  // 4. BLACK MARKET ARMORY SHOP
   // -------------------------------------------------------------
   public showShop(onLeave: () => void, onRepair: () => void, onFortify: () => void) {
+    bgm.playTrack('briefing');
+
     const backdrop = document.createElement('div');
-    backdrop.className = 'modal-backdrop';
+    backdrop.className = 'terminal-backdrop';
 
     const box = document.createElement('div');
-    box.className = 'modal-box';
+    box.className = 'armored-chassis';
 
     const shopChips = ALL_UPGRADES.filter(c => !playerInventory.hasChip(c.id)).slice(0, 3);
 
     box.innerHTML = `
-      <div class="modal-title">
-        <span>战地黑市军械库 (ARMORY SHOP)</span>
+      <div class="chassis-header-bar">
+        <div>DEPOT // BLACK MARKET LOGISTICS</div>
+        <div style="color: #facc15; font-weight: 700;">SALVAGE COGS: ${playerInventory.scraps} SCRAP</div>
       </div>
-      <div class="modal-subtitle">当前零件库存：<b style="color: #facc15; font-size: 18px;">${playerInventory.scraps} SCRAP</b></div>
-      <div id="shop-items-list" style="margin-bottom: 24px;"></div>
-      <button class="btn-primary" id="btn-leave-shop">离开军械库，继续前进</button>
+
+      <div class="console-main-title">战地黑市军械库 (ARMORY SHOP)</div>
+      <div class="console-sub-title">消耗收集的废铁零件，采购特种弹药改质、全装甲大修或加固要塞白钢防线</div>
+      <div id="armory-items-list" style="margin-bottom: 24px;"></div>
+      <button class="mech-btn-primary" id="btn-leave-shop">完成补给 · 继续推进</button>
     `;
 
-    const list = box.querySelector('#shop-items-list')!;
+    const list = box.querySelector('#armory-items-list')!;
 
-    // 1. Repair Tank
+    // 1. Repair
     const repairRow = document.createElement('div');
-    repairRow.className = 'shop-item';
+    repairRow.className = 'armory-row';
     repairRow.innerHTML = `
-      <div class="shop-item-left">
-        ${TacticalIcons.getChipIcon('nanite_repair', 48)}
+      <div style="display: flex; align-items: center; gap: 16px;">
+        ${TacticalIcons.getChipIcon('nanite_repair', 44)}
         <div>
           <div style="font-weight: 700; font-size: 16px;">战地紧急装甲抢修 (+50 HP)</div>
-          <div style="font-size: 13px; color: #94a3b8;">为战车快速更换装甲板并恢复 50 点生命值</div>
+          <div style="font-size: 13px; color: #94a3b8; font-family: 'Share Tech Mono', monospace;">REPAIR HULL +50 HP</div>
         </div>
       </div>
-      <button class="btn-secondary" id="buy-repair">30 零件</button>
+      <button class="mech-btn-secondary" id="buy-repair">30 零件</button>
     `;
     repairRow.querySelector('#buy-repair')!.addEventListener('click', () => {
       if (playerInventory.spendScrap(30)) {
@@ -460,18 +625,18 @@ export class UIOverlay {
     });
     list.appendChild(repairRow);
 
-    // 2. Fortify Base
+    // 2. Fortify
     const fortifyRow = document.createElement('div');
-    fortifyRow.className = 'shop-item';
+    fortifyRow.className = 'armory-row';
     fortifyRow.innerHTML = `
-      <div class="shop-item-left">
-        ${TacticalIcons.getChipIcon('reinforced_armor', 48)}
+      <div style="display: flex; align-items: center; gap: 16px;">
+        ${TacticalIcons.getChipIcon('reinforced_armor', 44)}
         <div>
           <div style="font-weight: 700; font-size: 16px;">基地钛合金全钢加固 (25秒)</div>
-          <div style="font-size: 13px; color: #94a3b8;">下一场战斗使老鹰基地外围固化为不可摧毁的钛合金白钢</div>
+          <div style="font-size: 13px; color: #94a3b8; font-family: 'Share Tech Mono', monospace;">FORTIFY BASTION STEEL</div>
         </div>
       </div>
-      <button class="btn-secondary" id="buy-fortify">40 零件</button>
+      <button class="mech-btn-secondary" id="buy-fortify">40 零件</button>
     `;
     fortifyRow.querySelector('#buy-fortify')!.addEventListener('click', () => {
       if (playerInventory.spendScrap(40)) {
@@ -485,20 +650,20 @@ export class UIOverlay {
     });
     list.appendChild(fortifyRow);
 
-    // 3. Chips on sale
+    // 3. Chips
     shopChips.forEach((chip) => {
       const chipRow = document.createElement('div');
-      chipRow.className = 'shop-item';
+      chipRow.className = 'armory-row';
       const rColor = getRarityColor(chip.rarity);
       chipRow.innerHTML = `
-        <div class="shop-item-left">
-          ${TacticalIcons.getChipIcon(chip.id, 48)}
+        <div style="display: flex; align-items: center; gap: 16px;">
+          ${TacticalIcons.getChipIcon(chip.id, 44)}
           <div>
             <div style="font-weight: 700; font-size: 16px; color: ${rColor};">${chip.nameZh}</div>
             <div style="font-size: 13px; color: #cbd5e1;">${chip.descriptionZh}</div>
           </div>
         </div>
-        <button class="btn-secondary" id="buy-chip-${chip.id}">${chip.cost || 60} 零件</button>
+        <button class="mech-btn-secondary" id="buy-chip-${chip.id}">${chip.cost || 60} 零件</button>
       `;
       chipRow.querySelector(`#buy-chip-${chip.id}`)!.addEventListener('click', () => {
         if (playerInventory.spendScrap(chip.cost || 60)) {
@@ -523,30 +688,36 @@ export class UIOverlay {
   }
 
   // -------------------------------------------------------------
-  // REST DEPOT MODAL
+  // 5. REST DEPOT MODAL
   // -------------------------------------------------------------
   public showRest(onDone: () => void, onFullHeal: () => void, onUpgradeWeapon: () => void) {
+    bgm.playTrack('briefing');
+
     const backdrop = document.createElement('div');
-    backdrop.className = 'modal-backdrop';
+    backdrop.className = 'terminal-backdrop';
 
     const box = document.createElement('div');
-    box.className = 'modal-box';
+    box.className = 'armored-chassis';
 
     box.innerHTML = `
-      <div class="modal-title">
-        <span>战地整备所 (FIELD DEPOT)</span>
+      <div class="chassis-header-bar">
+        <div>DEPOT // EMERGENCY FIELD DOCK</div>
+        <div class="warning-tag" style="background: #22c55e;">REST SECURED</div>
       </div>
-      <div class="modal-subtitle">在残垣断壁中找到一处隐蔽地下机修站，请选择一项整备方案</div>
-      <div style="display: flex; gap: 20px; justify-content: center; margin-top: 20px;">
-        <div class="upgrade-card" id="rest-heal" style="border: 2px solid #22c55e; flex: 1;">
-          <div class="card-icon-wrapper">${TacticalIcons.getChipIcon('nanite_repair', 56)}</div>
-          <div class="card-name">全面检修大修</div>
-          <div class="card-desc">战车恢复 70% 最大生命值，并为老鹰要塞恢复 50 点装甲。</div>
+
+      <div class="console-main-title">战地地下机修站 (FIELD DEPOT)</div>
+      <div class="console-sub-title">在交火间隙寻获地下整备车间，请选择一项战备抢修方案</div>
+
+      <div style="display: flex; gap: 24px; justify-content: center; margin-top: 20px;">
+        <div class="mod-cartridge" id="rest-heal" style="--border-color: #22c55e; flex: 1;">
+          <div class="cartridge-schematic">${TacticalIcons.getChipIcon('nanite_repair', 56)}</div>
+          <div class="cartridge-title" style="color: #4ade80;">全面抢修大修</div>
+          <div class="cartridge-desc">战车恢复 70% 最大生命值，并为老鹰要塞抢修恢复 50 点装甲。</div>
         </div>
-        <div class="upgrade-card" id="rest-upgrade" style="border: 2px solid #facc15; flex: 1;">
-          <div class="card-icon-wrapper">${TacticalIcons.getChipIcon('high_velocity', 56)}</div>
-          <div class="card-name">主炮火控升级</div>
-          <div class="card-desc">主炮等级提升 1 星级，大幅提升射速与炮弹穿透威力。</div>
+        <div class="mod-cartridge" id="rest-upgrade" style="--border-color: #facc15; flex: 1;">
+          <div class="cartridge-schematic">${TacticalIcons.getChipIcon('high_velocity', 56)}</div>
+          <div class="cartridge-title" style="color: #fde047;">主炮火控升级</div>
+          <div class="cartridge-desc">主炮星级提升 1 级，全面强化弹速、射速与穿透威力。</div>
         </div>
       </div>
     `;
@@ -570,23 +741,29 @@ export class UIOverlay {
   }
 
   // -------------------------------------------------------------
-  // FIELD EVENT MODAL
+  // 6. FIELD EVENT MODAL
   // -------------------------------------------------------------
   public showEvent(onDone: () => void, onAddScrap: (n: number) => void, onTakeDamage: (n: number) => void) {
+    bgm.playTrack('briefing');
+
     const backdrop = document.createElement('div');
-    backdrop.className = 'modal-backdrop';
+    backdrop.className = 'terminal-backdrop';
 
     const box = document.createElement('div');
-    box.className = 'modal-box';
+    box.className = 'armored-chassis';
 
     box.innerHTML = `
-      <div class="modal-title">
-        <span>战地机密情报：废弃的原型重装车</span>
+      <div class="chassis-header-bar">
+        <div>INTEL // FIELD CLASSIFIED EVENT</div>
+        <div class="warning-tag" style="background: #eab308; color: #000;">ENCRYPTED SIGNAL</div>
       </div>
-      <div class="modal-subtitle">战地雷达探测到一辆冒着浓烟的敌军原型实验车，车体内隐约有高能反应。</div>
+
+      <div class="console-main-title">战地机密情报：废弃的原型重装车</div>
+      <div class="console-sub-title">前线雷达探测到一辆冒着浓烟的敌军原型实验车，车体内隐约有高能辐射反应。</div>
+
       <div style="display: flex; flex-direction: column; gap: 14px; margin: 20px 0;">
-        <button class="shop-item" id="opt-1" style="cursor: pointer; width: 100%;">
-          <div class="shop-item-left">
+        <button class="armory-row" id="opt-1" style="cursor: pointer; width: 100%;">
+          <div style="display: flex; align-items: center; gap: 16px;">
             ${TacticalIcons.getChipIcon('overdrive_thruster', 42)}
             <div>
               <div style="font-weight: 700; color: #38bdf8;">1. 冒险强拆反应堆核心</div>
@@ -594,8 +771,8 @@ export class UIOverlay {
             </div>
           </div>
         </button>
-        <button class="shop-item" id="opt-2" style="cursor: pointer; width: 100%;">
-          <div class="shop-item-left">
+        <button class="armory-row" id="opt-2" style="cursor: pointer; width: 100%;">
+          <div style="display: flex; align-items: center; gap: 16px;">
             ${TacticalIcons.getChipIcon('scrap_collector', 42)}
             <div>
               <div style="font-weight: 700; color: #22c55e;">2. 安全回收外挂备件</div>
@@ -603,8 +780,8 @@ export class UIOverlay {
             </div>
           </div>
         </button>
-        <button class="shop-item" id="opt-3" style="cursor: pointer; width: 100%;">
-          <div class="shop-item-left">
+        <button class="armory-row" id="opt-3" style="cursor: pointer; width: 100%;">
+          <div style="display: flex; align-items: center; gap: 16px;">
             ${TacticalIcons.getMapNodeIcon('event', 42)}
             <div>
               <div style="font-weight: 700; color: #cbd5e1;">3. 保持警戒，绕道前进</div>
@@ -640,41 +817,55 @@ export class UIOverlay {
   }
 
   // -------------------------------------------------------------
-  // GAME OVER / VICTORY MODAL
+  // 7. RESULT MODAL (VICTORY / DEFEAT)
   // -------------------------------------------------------------
   public showResult(isVictory: boolean, reason: string, onRestart: () => void) {
-    if (isVictory) sounds.playVictory();
-    else sounds.playExplosion(true);
+    if (isVictory) {
+      sounds.playVictory();
+      bgm.playTrack('briefing');
+    } else {
+      sounds.playExplosion(true);
+      bgm.stop();
+    }
 
     const backdrop = document.createElement('div');
-    backdrop.className = 'modal-backdrop';
+    backdrop.className = 'terminal-backdrop';
 
     const box = document.createElement('div');
-    box.className = 'modal-box';
+    box.className = 'armored-chassis';
 
     box.innerHTML = `
-      <div class="modal-title" style="color: ${isVictory ? '#facc15' : '#ef4444'};">
+      <div class="chassis-header-bar">
+        <div>OPERATION STATUS // MISSION TERMINATED</div>
+        <div class="warning-tag" style="background: ${isVictory ? '#22c55e' : '#ef4444'}; color: #fff;">
+          ${isVictory ? 'MISSION ACCOMPLISHED' : 'CASUALTY REPORT'}
+        </div>
+      </div>
+
+      <div class="console-main-title" style="color: ${isVictory ? '#facc15' : '#ef4444'};">
         ${isVictory ? TacticalIcons.getEagleLogo(36) : TacticalIcons.getMapNodeIcon('elite', 36)}
         <span>${isVictory ? '战役大捷：终极要塞已摧毁！' : '战车阵亡 / 基地沦陷'}</span>
         ${isVictory ? TacticalIcons.getEagleLogo(36) : TacticalIcons.getMapNodeIcon('elite', 36)}
       </div>
-      <div class="modal-subtitle">${reason}</div>
-      <div style="background: rgba(30, 41, 59, 0.6); border-radius: 14px; padding: 22px; margin-bottom: 24px; display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px;">
+      <div class="console-sub-title">${reason}</div>
+
+      <div style="background: rgba(15, 23, 42, 0.85); border: 1px solid #334155; clip-path: polygon(12px 0%, calc(100% - 12px) 0%, 100% 12px, 100% calc(100% - 12px), calc(100% - 12px) 100%, 12px 100%, 0% calc(100% - 12px), 0% 12px); padding: 22px; margin-bottom: 24px; display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px;">
         <div>
-          <div style="color: #94a3b8; font-size: 13px;">歼灭敌军</div>
-          <div style="font-size: 24px; font-weight: 800; color: #38bdf8;">${playerInventory.kills}</div>
+          <div style="color: #94a3b8; font-family: 'Share Tech Mono', monospace; font-size: 13px;">歼灭敌军</div>
+          <div style="font-size: 28px; font-weight: 800; color: #38bdf8;">${playerInventory.kills}</div>
         </div>
         <div>
-          <div style="color: #94a3b8; font-size: 13px;">回收零件</div>
-          <div style="font-size: 24px; font-weight: 800; color: #facc15;">${playerInventory.scraps}</div>
+          <div style="color: #94a3b8; font-family: 'Share Tech Mono', monospace; font-size: 13px;">回收零件</div>
+          <div style="font-size: 28px; font-weight: 800; color: #facc15;">${playerInventory.scraps}</div>
         </div>
         <div>
-          <div style="color: #94a3b8; font-size: 13px;">装备芯片</div>
-          <div style="font-size: 24px; font-weight: 800; color: #c084fc;">${playerInventory.getActiveChips().length}</div>
+          <div style="color: #94a3b8; font-family: 'Share Tech Mono', monospace; font-size: 13px;">装载芯片</div>
+          <div style="font-size: 28px; font-weight: 800; color: #c084fc;">${playerInventory.getActiveChips().length}</div>
         </div>
       </div>
-      <button class="btn-primary" id="btn-restart" style="font-size: 17px; padding: 14px 40px;">
-        再次出击 (DEPLOY AGAIN)
+
+      <button class="mech-btn-primary" id="btn-restart">
+        重新出击 (DEPLOY AGAIN)
       </button>
     `;
 
