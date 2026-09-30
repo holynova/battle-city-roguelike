@@ -861,7 +861,7 @@ export class UIOverlay {
   // -------------------------------------------------------------
   // 3. CAMPAIGN MAP (SLAY THE SPIRE PARCHMENT SCROLL MAP)
   // -------------------------------------------------------------
-  public showCampaignMap(onNodeSelected: (node: MapNode) => void) {
+  public showCampaignMap(onNodeSelected: (node: MapNode) => void, playerHp: number = 100, playerMaxHp: number = 100) {
     bgm.playTrack('briefing');
 
     const backdrop = document.createElement('div');
@@ -889,7 +889,7 @@ export class UIOverlay {
         <div class="spire-top-left">
           <div class="spire-stat-pill hp">
             <span>♥</span>
-            <span>100 / 100 HP</span>
+            <span>${Math.round(playerHp)} / ${Math.round(playerMaxHp)} HP</span>
           </div>
           <div class="spire-stat-pill gold">
             <span>⚙</span>

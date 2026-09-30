@@ -265,6 +265,14 @@ export class Engine {
   public startRun() {
     this.ui.clear();
     playerInventory.reset();
+    this.player.maxHp = 100;
+    this.player.hp = 100;
+    this.player.maxShield = 50;
+    this.player.shield = 50;
+    this.playerDamagePulse = 0;
+    this.eagleBase.hp = this.eagleBase.maxHp;
+    this.eagleBase.shield = this.eagleBase.maxShield;
+    this.eagleBase.isDestroyed = false;
     this.player.syncWeapons();
     campaignMap.generateAct(1);
     this.showCampaignMap();
@@ -272,9 +280,13 @@ export class Engine {
 
   public showCampaignMap() {
     this.state = 'MAP_VIEW';
-    this.ui.showCampaignMap((node) => {
-      this.enterNode(node);
-    });
+    this.ui.showCampaignMap(
+      (node) => {
+        this.enterNode(node);
+      },
+      this.player.hp,
+      this.player.maxHp
+    );
   }
 
   public enterNode(node: MapNode) {
@@ -324,6 +336,14 @@ export class Engine {
   public startCombatLevel(node: MapNode) {
     this.state = 'PLAYING';
     this.isBossFight = node.type === 'boss';
+
+    // 确保每个关卡战斗开始时玩家装甲与护盾保持全满
+    this.player.hp = this.player.maxHp;
+    this.player.shield = this.player.maxShield;
+    this.playerDamagePulse = 0;
+    this.eagleBase.hp = this.eagleBase.maxHp;
+    this.eagleBase.shield = this.eagleBase.maxShield;
+    this.eagleBase.isDestroyed = false;
 
     // Synchronize weapons
     this.player.syncWeapons();
@@ -377,6 +397,17 @@ export class Engine {
     bgm.playTrack('briefing');
     playerInventory.stage++;
 
+    // 每个关卡结束补血补满：装甲与能量护盾立刻完全修复，基地生命补满
+    this.player.hp = this.player.maxHp;
+    this.player.shield = this.player.maxShield;
+    this.playerDamagePulse = 0;
+    this.eagleBase.hp = this.eagleBase.maxHp;
+    this.eagleBase.shield = this.eagleBase.maxShield;
+    this.eagleBase.isDestroyed = false;
+
+    // 战车上方爆散提示
+    this.vfx.spawnFloatingText(this.player.x, this.player.y - 28, '⚡ 战役告捷：装甲与护盾已全面补满 (+100% HP)', '#22c55e');
+
     // Boss win check
     if (this.isBossFight) {
       this.state = 'VICTORY';
@@ -395,7 +426,7 @@ export class Engine {
 
         if (chip.id === 'reinforced_armor') {
           this.player.maxHp += 40;
-          this.player.hp += 40;
+          this.player.hp = this.player.maxHp;
         }
       }
       this.showCampaignMap();
