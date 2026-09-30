@@ -31,11 +31,19 @@ export class UIOverlay {
     const btn = document.getElementById('audio-toggle-btn');
     if (btn) {
       btn.addEventListener('click', () => {
+        sounds.playUiClick();
         const isEnabled = bgm.toggleMute();
         btn.textContent = isEnabled ? '🔊 BGM: ON' : '🔇 BGM: OFF';
         btn.style.color = isEnabled ? '#38bdf8' : '#94a3b8';
       });
+      btn.addEventListener('mouseenter', () => sounds.playUiHover());
     }
+  }
+
+  private attachAudioFeedback(root: HTMLElement) {
+    root.querySelectorAll('button, .mod-cartridge, .tactical-node-badge, .armory-row, .event-option-card').forEach((el) => {
+      el.addEventListener('mouseenter', () => sounds.playUiHover());
+    });
   }
 
   private injectStyles() {
@@ -58,43 +66,58 @@ export class UIOverlay {
       .terminal-backdrop {
         position: absolute;
         inset: 0;
-        background: radial-gradient(circle at center, rgba(6, 11, 25, 0.88) 0%, rgba(2, 4, 10, 0.98) 100%);
-        backdrop-filter: blur(14px);
+        background: radial-gradient(circle at center, rgba(6, 11, 25, 0.92) 0%, rgba(2, 4, 10, 0.98) 100%);
+        backdrop-filter: blur(16px);
         display: flex;
         flex-direction: column;
         align-items: center;
         justify-content: center;
         pointer-events: auto;
         animation: consoleBoot 0.22s ease-out;
+        padding: 16px;
       }
       @keyframes consoleBoot {
         from { opacity: 0; transform: scale(0.98); }
         to { opacity: 1; transform: scale(1); }
       }
+
       /* Heavy Armored Military Box with 45° Chamfered Corners */
       .armored-chassis {
-        max-width: 940px;
-        width: 94%;
-        background: linear-gradient(180deg, #18202f 0%, #0d131f 100%);
+        max-width: 960px;
+        width: 96%;
+        max-height: 94vh;
+        overflow-y: auto;
+        background: linear-gradient(180deg, #1b2434 0%, #101726 60%, #080c14 100%);
         border: 2px solid #38bdf8;
         clip-path: polygon(
-          20px 0%, calc(100% - 20px) 0%, 100% 20px,
-          100% calc(100% - 20px), calc(100% - 20px) 100%, 20px 100%,
-          0% calc(100% - 20px), 0% 20px
+          22px 0%, calc(100% - 22px) 0%, 100% 22px,
+          100% calc(100% - 22px), calc(100% - 22px) 100%, 22px 100%,
+          0% calc(100% - 22px), 0% 22px
         );
-        box-shadow: 0 40px 80px rgba(0, 0, 0, 0.9), 0 0 35px rgba(56, 189, 248, 0.25);
-        padding: 30px;
+        box-shadow: 0 45px 90px rgba(0, 0, 0, 0.95), 0 0 40px rgba(56, 189, 248, 0.3);
+        padding: 26px 30px;
         text-align: center;
         position: relative;
       }
+      .armored-chassis::-webkit-scrollbar {
+        width: 6px;
+      }
+      .armored-chassis::-webkit-scrollbar-track {
+        background: #090d16;
+      }
+      .armored-chassis::-webkit-scrollbar-thumb {
+        background: #334155;
+        border-radius: 3px;
+      }
+
       /* Industrial Top Header Stripe */
       .chassis-header-bar {
         display: flex;
         align-items: center;
         justify-content: space-between;
-        border-bottom: 2px solid rgba(56, 189, 248, 0.3);
+        border-bottom: 2px solid rgba(56, 189, 248, 0.35);
         padding-bottom: 12px;
-        margin-bottom: 20px;
+        margin-bottom: 18px;
         font-family: 'Share Tech Mono', monospace;
         font-size: 13px;
         color: #38bdf8;
@@ -104,8 +127,9 @@ export class UIOverlay {
         background: #ef4444;
         color: #ffffff;
         font-weight: 700;
-        padding: 2px 8px;
+        padding: 3px 10px;
         clip-path: polygon(6px 0%, 100% 0%, calc(100% - 6px) 100%, 0% 100%);
+        letter-spacing: 1px;
       }
       .console-main-title {
         font-size: 30px;
@@ -117,15 +141,55 @@ export class UIOverlay {
         align-items: center;
         justify-content: center;
         gap: 14px;
-        text-shadow: 0 0 15px rgba(56, 189, 248, 0.4);
+        text-shadow: 0 0 20px rgba(56, 189, 248, 0.5);
       }
       .console-sub-title {
-        font-size: 14px;
+        font-size: 13.5px;
         color: #94a3b8;
         font-family: 'Share Tech Mono', monospace;
         letter-spacing: 1px;
         margin-top: 4px;
-        margin-bottom: 24px;
+        margin-bottom: 20px;
+      }
+
+      /* -----------------------------------------------------------
+         FEATURE DOSSIER CARDS (Title Screen)
+      ----------------------------------------------------------- */
+      .title-dossier-grid {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 14px;
+        margin-bottom: 20px;
+      }
+      @media (max-width: 768px) {
+        .title-dossier-grid {
+          grid-template-columns: repeat(2, 1fr);
+        }
+      }
+      .title-dossier-card {
+        background: rgba(15, 23, 42, 0.8);
+        border: 1px solid rgba(56, 189, 248, 0.25);
+        clip-path: polygon(8px 0%, 100% 0%, calc(100% - 8px) 100%, 0% 100%);
+        padding: 12px 10px;
+        text-align: left;
+      }
+      .title-dossier-card .card-tag {
+        font-family: 'Share Tech Mono', monospace;
+        font-size: 10px;
+        color: #facc15;
+        font-weight: 700;
+        margin-bottom: 4px;
+      }
+      .title-dossier-card .card-heading {
+        font-size: 14px;
+        font-weight: 700;
+        color: #f8fafc;
+        margin-bottom: 4px;
+      }
+      .title-dossier-card .card-text {
+        font-size: 11.5px;
+        color: #94a3b8;
+        line-height: 1.45;
       }
 
       /* -----------------------------------------------------------
@@ -133,10 +197,15 @@ export class UIOverlay {
       ----------------------------------------------------------- */
       .cartridges-rack {
         display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(255px, 1fr));
-        gap: 24px;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 22px;
         margin-bottom: 18px;
         perspective: 1200px;
+      }
+      @media (max-width: 768px) {
+        .cartridges-rack {
+          grid-template-columns: 1fr;
+        }
       }
       .cartridge-wrapper {
         perspective: 1200px;
@@ -149,7 +218,7 @@ export class UIOverlay {
           0% calc(100% - 14px), 0% 14px
         );
         border: 2px solid var(--border-color, #475569);
-        padding: 24px 18px 20px;
+        padding: 22px 18px 20px;
         cursor: pointer;
         transition: transform 0.18s ease-out, box-shadow 0.2s ease, border-color 0.2s;
         display: flex;
@@ -157,17 +226,16 @@ export class UIOverlay {
         align-items: center;
         position: relative;
         transform-style: preserve-3d;
-        box-shadow: 0 10px 25px rgba(0, 0, 0, 0.6);
+        box-shadow: 0 12px 30px rgba(0, 0, 0, 0.7);
       }
       .mod-cartridge:hover {
         border-color: var(--highlight-color, #38bdf8);
-        box-shadow: 0 25px 50px rgba(0, 0, 0, 0.8), 0 0 30px var(--highlight-color, rgba(56, 189, 248, 0.4));
+        box-shadow: 0 25px 50px rgba(0, 0, 0, 0.85), 0 0 35px var(--highlight-color, rgba(56, 189, 248, 0.4));
       }
-      /* Top Brass Gold Connector Pins */
       .cartridge-pins {
         display: flex;
         gap: 6px;
-        margin-bottom: 12px;
+        margin-bottom: 10px;
       }
       .cartridge-pin {
         width: 8px;
@@ -175,13 +243,12 @@ export class UIOverlay {
         background: #facc15;
         border-radius: 1px;
       }
-      /* Stenciled Serial Code */
       .cartridge-serial {
         font-family: 'Share Tech Mono', monospace;
         font-size: 11px;
         letter-spacing: 1.5px;
         color: #64748b;
-        margin-bottom: 10px;
+        margin-bottom: 8px;
       }
       .cartridge-rarity-badge {
         font-family: 'Share Tech Mono', monospace;
@@ -191,7 +258,7 @@ export class UIOverlay {
         letter-spacing: 2px;
         padding: 3px 12px;
         clip-path: polygon(6px 0%, 100% 0%, calc(100% - 6px) 100%, 0% 100%);
-        margin-bottom: 16px;
+        margin-bottom: 14px;
       }
       .cartridge-schematic {
         margin-bottom: 14px;
@@ -210,13 +277,36 @@ export class UIOverlay {
         line-height: 1.55;
         font-family: 'Chakra Petch', sans-serif;
       }
+      .cartridge-equip-btn {
+        margin-top: 14px;
+        padding: 6px 16px;
+        font-size: 12px;
+        font-family: 'Share Tech Mono', monospace;
+        font-weight: 700;
+        background: rgba(56, 189, 248, 0.15);
+        border: 1px solid #38bdf8;
+        color: #38bdf8;
+        clip-path: polygon(6px 0%, 100% 0%, calc(100% - 6px) 100%, 0% 100%);
+      }
 
       /* -----------------------------------------------------------
-         TACTICAL WAR ROOM MAP OVERHAUL
+         TACTICAL WAR ROOM MAP (TWO-COLUMN BRIEFING)
       ----------------------------------------------------------- */
+      .war-room-split {
+        display: flex;
+        gap: 20px;
+        margin-bottom: 14px;
+        text-align: left;
+      }
+      @media (max-width: 800px) {
+        .war-room-split {
+          flex-direction: column;
+        }
+      }
       .war-table-canvas-wrap {
         position: relative;
-        margin: 0 auto;
+        flex: 1;
+        height: 380px;
         border: 2px solid #38bdf8;
         clip-path: polygon(
           12px 0%, calc(100% - 12px) 0%, 100% 12px,
@@ -231,22 +321,22 @@ export class UIOverlay {
         display: flex;
         flex-direction: column;
         justify-content: space-around;
-        padding: 24px 0;
+        padding: 16px 0;
       }
       .war-table-row {
         display: flex;
         justify-content: center;
-        gap: 60px;
+        gap: 40px;
       }
       .tactical-node-badge {
-        width: 76px;
-        height: 76px;
+        width: 72px;
+        height: 72px;
         clip-path: polygon(
-          12px 0%, calc(100% - 12px) 0%, 100% 12px,
-          100% calc(100% - 12px), calc(100% - 12px) 100%, 12px 100%,
-          0% calc(100% - 12px), 0% 12px
+          10px 0%, calc(100% - 10px) 0%, 100% 10px,
+          100% calc(100% - 10px), calc(100% - 10px) 100%, 10px 100%,
+          0% calc(100% - 10px), 0% 10px
         );
-        background: rgba(15, 23, 42, 0.92);
+        background: rgba(15, 23, 42, 0.94);
         border: 2px solid #334155;
         display: flex;
         flex-direction: column;
@@ -282,6 +372,49 @@ export class UIOverlay {
         50% { transform: scale(1.18); box-shadow: 0 0 35px rgba(34, 197, 94, 0.9); }
       }
 
+      /* Right Reconnaissance Dossier Panel */
+      .recon-dossier-panel {
+        width: 320px;
+        background: rgba(11, 17, 32, 0.95);
+        border: 2px solid #334155;
+        clip-path: polygon(10px 0%, 100% 0%, calc(100% - 10px) 100%, 0% 100%);
+        padding: 18px;
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+      }
+      .recon-header {
+        font-family: 'Share Tech Mono', monospace;
+        font-size: 11px;
+        color: #38bdf8;
+        border-bottom: 1px solid rgba(56, 189, 248, 0.3);
+        padding-bottom: 8px;
+        margin-bottom: 12px;
+      }
+      .recon-sector-title {
+        font-size: 20px;
+        font-weight: 800;
+        color: #f8fafc;
+        margin-bottom: 6px;
+      }
+      .recon-threat-tag {
+        display: inline-block;
+        font-family: 'Share Tech Mono', monospace;
+        font-size: 11px;
+        font-weight: 700;
+        padding: 2px 8px;
+        background: rgba(239, 68, 68, 0.2);
+        border: 1px solid #ef4444;
+        color: #ef4444;
+        margin-bottom: 12px;
+      }
+      .recon-desc {
+        font-size: 13px;
+        color: #94a3b8;
+        line-height: 1.6;
+        margin-bottom: 16px;
+      }
+
       /* -----------------------------------------------------------
          MECHANICAL INDUSTRIAL BUTTONS
       ----------------------------------------------------------- */
@@ -298,7 +431,7 @@ export class UIOverlay {
         font-size: 17px;
         font-weight: 700;
         letter-spacing: 1.5px;
-        padding: 14px 38px;
+        padding: 13px 36px;
         cursor: pointer;
         transition: all 0.2s;
         box-shadow: 0 6px 20px rgba(2, 132, 199, 0.45);
@@ -341,7 +474,7 @@ export class UIOverlay {
         display: flex;
         align-items: center;
         justify-content: space-between;
-        margin-bottom: 14px;
+        margin-bottom: 12px;
         text-align: left;
       }
     `;
@@ -353,7 +486,7 @@ export class UIOverlay {
   }
 
   // -------------------------------------------------------------
-  // 1. TITLE SCREEN WITH CINEMATIC BATTLEFIELD COVER ART
+  // 1. TITLE SCREEN WITH CINEMATIC BATTLEFIELD COVER ART & DOSSIERS
   // -------------------------------------------------------------
   public showStartMenu(onStart: () => void) {
     bgm.playTrack('briefing');
@@ -370,7 +503,7 @@ export class UIOverlay {
         <div class="warning-tag">DEFCON-1 ENGAGED</div>
       </div>
 
-      <div id="title-cover-canvas-box" style="margin-bottom: 20px; border: 2px solid #38bdf8; clip-path: polygon(14px 0%, calc(100% - 14px) 0%, 100% 14px, 100% calc(100% - 14px), calc(100% - 14px) 100%, 14px 100%, 0% calc(100% - 14px), 0% 14px);"></div>
+      <div id="title-cover-canvas-box" style="margin-bottom: 18px; border: 2px solid #38bdf8; clip-path: polygon(14px 0%, calc(100% - 14px) 0%, 100% 14px, 100% calc(100% - 14px), calc(100% - 14px) 100%, 14px 100%, 0% calc(100% - 14px), 0% 14px);"></div>
 
       <div class="console-main-title">
         ${TacticalIcons.getEagleLogo(36)}
@@ -381,11 +514,36 @@ export class UIOverlay {
         BATTLE CITY : ROGUE BASTION // 4K RETINA VECTOR × CHIP-TREE ROGUELITE
       </div>
 
-      <div style="background: rgba(15, 23, 42, 0.75); border: 1px solid rgba(56, 189, 248, 0.25); clip-path: polygon(10px 0%, 100% 0%, calc(100% - 10px) 100%, 0% 100%); padding: 18px 24px; text-align: left; max-width: 640px; margin: 0 auto 24px; font-size: 13.5px; line-height: 1.8;">
-        <span style="color: #facc15; font-weight: 700; font-family: 'Share Tech Mono', monospace;">[ 战车火控中枢指南 ]</span><br/>
-        • <b>WASD / 方向键</b>：战车底盘机动行驶（具有差速履带印痕与物理惯性）<br/>
-        • <b>鼠标指针</b>：独立 360° 炮塔自由瞄准 · <b>左键 / 空格</b>：主炮高爆开火<br/>
-        • <b>Shift / 右键</b>：喷气超燃冲刺（瞬时无敌突进） · <b>老鹰基地</b>：附带能量屏障与自动近防炮
+      <!-- 4 Strategic Feature Cards -->
+      <div class="title-dossier-grid">
+        <div class="title-dossier-card">
+          <div class="card-tag">DOSSIER 01</div>
+          <div class="card-heading">10 大战术战场</div>
+          <div class="card-text">莱茵水堑、废墟巷战、热带密林、极地霜冻、钛钢要塞与角斗场</div>
+        </div>
+        <div class="title-dossier-card">
+          <div class="card-tag">DOSSIER 02</div>
+          <div class="card-heading">20+ 战备芯片树</div>
+          <div class="card-text">穿甲重炮、能量护盾、吸血死灵、连锁电弧与多重自动副炮</div>
+        </div>
+        <div class="title-dossier-card">
+          <div class="card-tag">DOSSIER 03</div>
+          <div class="card-heading">高精火控机动</div>
+          <div class="card-text">360° 独立自由炮塔、喷气漂移冲刺、老鹰指挥要塞自动近防系统</div>
+        </div>
+        <div class="title-dossier-card">
+          <div class="card-tag">DOSSIER 04</div>
+          <div class="card-heading">歌利亚巨兽 BOSS</div>
+          <div class="card-text">多炮塔重型巡洋要塞巨坦，四向重炮与导弹齐射终极决斗</div>
+        </div>
+      </div>
+
+      <!-- Operator Controls Manual -->
+      <div style="background: rgba(15, 23, 42, 0.75); border: 1px solid rgba(56, 189, 248, 0.25); clip-path: polygon(10px 0%, 100% 0%, calc(100% - 10px) 100%, 0% 100%); padding: 14px 20px; text-align: left; max-width: 720px; margin: 0 auto 20px; font-size: 13px; line-height: 1.7;">
+        <span style="color: #facc15; font-weight: 700; font-family: 'Share Tech Mono', monospace;">[ 驾驶员火控与机动指南 ]</span><br/>
+        • <b>WASD / 方向键</b>：战车履带差速行驶（附带物理惯性与泥地印痕）<br/>
+        • <b>鼠标指针</b>：独立 360° 炮塔自由瞄准 · <b>左键 / 空格</b>：120mm 穿甲高爆射击<br/>
+        • <b>Shift / 右键</b>：超燃喷气冲刺（瞬时无敌突进） · <b>老鹰基地</b>：附带能量屏障与全自动速射近防炮
       </div>
 
       <button class="mech-btn-primary" id="btn-deploy-run">
@@ -394,13 +552,16 @@ export class UIOverlay {
     `;
 
     // Embed procedural cover canvas
-    const coverCanvas = GameArtwork.getTitleCoverArt(720, 240);
+    const coverCanvas = GameArtwork.getTitleCoverArt(720, 220);
     coverCanvas.style.display = 'block';
     coverCanvas.style.width = '100%';
     coverCanvas.style.height = 'auto';
     box.querySelector('#title-cover-canvas-box')!.appendChild(coverCanvas);
 
+    this.attachAudioFeedback(box);
+
     box.querySelector('#btn-deploy-run')!.addEventListener('click', () => {
+      sounds.playUiClick();
       sounds.playPowerup();
       this.clear();
       onStart();
@@ -467,6 +628,7 @@ export class UIOverlay {
         </div>
         <div class="cartridge-title">${chip.nameZh}</div>
         <div class="cartridge-desc">${chip.descriptionZh}</div>
+        <div class="cartridge-equip-btn">装载此模块 (INSTALL)</div>
       `;
 
       // 3D Card Tilt Mouse Physics
@@ -477,10 +639,10 @@ export class UIOverlay {
         const centerX = rect.width / 2;
         const centerY = rect.height / 2;
 
-        const rotateX = ((y - centerY) / centerY) * -14;
-        const rotateY = ((x - centerX) / centerX) * 14;
+        const rotateX = ((y - centerY) / centerY) * -12;
+        const rotateY = ((x - centerX) / centerX) * 12;
 
-        cart.style.transform = `perspective(1000px) rotateX(${rotateX}deg) rotateY(${rotateY}deg) scale3d(1.05, 1.05, 1.05)`;
+        cart.style.transform = `perspective(1000px) rotateX(${rotateX}deg) rotateY(${rotateY}deg) scale3d(1.04, 1.04, 1.04)`;
       });
 
       cart.addEventListener('mouseleave', () => {
@@ -488,6 +650,7 @@ export class UIOverlay {
       });
 
       cart.onclick = () => {
+        sounds.playModuleEquip();
         sounds.playPowerup();
         playerInventory.addChip(chip.id);
         this.clear();
@@ -498,12 +661,14 @@ export class UIOverlay {
       rack.appendChild(wrapper);
     });
 
+    this.attachAudioFeedback(box);
+
     backdrop.appendChild(box);
     this.container.appendChild(backdrop);
   }
 
   // -------------------------------------------------------------
-  // 3. CAMPAIGN MAP (TOPOGRAPHIC WAR TABLE)
+  // 3. CAMPAIGN MAP (TOPOGRAPHIC WAR TABLE WITH RECON INSPECTOR)
   // -------------------------------------------------------------
   public showCampaignMap(onNodeSelected: (node: MapNode) => void) {
     bgm.playTrack('briefing');
@@ -514,6 +679,18 @@ export class UIOverlay {
     const box = document.createElement('div');
     box.className = 'armored-chassis';
 
+    // Find the first available node to preview
+    let defaultPreviewNode: MapNode | null = null;
+    for (const row of campaignMap.floors) {
+      for (const n of row) {
+        if (n.available) {
+          defaultPreviewNode = n;
+          break;
+        }
+      }
+      if (defaultPreviewNode) break;
+    }
+
     box.innerHTML = `
       <div class="chassis-header-bar">
         <div>STRATEGIC // THEATER OF OPERATIONS</div>
@@ -523,19 +700,67 @@ export class UIOverlay {
       <div class="console-main-title">战役作战全景沙盘 (WAR ROOM)</div>
       <div class="console-sub-title">分析等高线地势与雷达目标，选择推进战区，突破防线直逼要塞巨兽</div>
 
-      <div class="war-table-canvas-wrap" id="war-table-wrap" style="width: 760px; height: 420px;">
-        <div class="war-table-nodes-layer" id="war-table-nodes"></div>
+      <div class="war-room-split">
+        <!-- Left: Holo Map Table -->
+        <div class="war-table-canvas-wrap" id="war-table-wrap">
+          <div class="war-table-nodes-layer" id="war-table-nodes"></div>
+        </div>
+
+        <!-- Right: Reconnaissance Dossier Panel -->
+        <div class="recon-dossier-panel" id="recon-panel">
+          <div>
+            <div class="recon-header">// TACTICAL RECONNAISSANCE</div>
+            <div class="recon-sector-title" id="recon-title">${defaultPreviewNode ? defaultPreviewNode.nameZh : '选择战区'}</div>
+            <div class="recon-threat-tag" id="recon-threat">THREAT LEVEL: HIGH</div>
+            <div class="recon-desc" id="recon-desc">${defaultPreviewNode ? defaultPreviewNode.descZh : '请点击左侧沙盘的高亮战区节点查看侦察简报并出击。'}</div>
+          </div>
+          <div>
+            <div style="font-family: 'Share Tech Mono', monospace; font-size: 11px; color: #facc15; margin-bottom: 10px;">
+              • 预计回收: 160 ~ 240 零件
+            </div>
+            <button class="mech-btn-primary" id="btn-confirm-sector" style="width: 100%; padding: 10px 0; font-size: 15px;" ${defaultPreviewNode ? '' : 'disabled'}>
+              锁定航线 · 投入战役
+            </button>
+          </div>
+        </div>
       </div>
     `;
 
     // Embed Topographic War Table Canvas as Background
     const warTableWrap = box.querySelector('#war-table-wrap')!;
-    const warTableCanvas = GameArtwork.getTacticalWarTableBg(760, 420);
+    const warTableCanvas = GameArtwork.getTacticalWarTableBg(600, 380);
     warTableCanvas.style.position = 'absolute';
     warTableCanvas.style.inset = '0';
+    warTableCanvas.style.width = '100%';
+    warTableCanvas.style.height = '100%';
     warTableWrap.insertBefore(warTableCanvas, warTableWrap.firstChild);
 
     const nodesLayer = box.querySelector('#war-table-nodes')!;
+    const reconTitle = box.querySelector('#recon-title') as HTMLElement;
+    const reconDesc = box.querySelector('#recon-desc') as HTMLElement;
+    const btnConfirm = box.querySelector('#btn-confirm-sector') as HTMLButtonElement;
+
+    let selectedNode: MapNode | null = defaultPreviewNode;
+
+    const updateRecon = (node: MapNode) => {
+      selectedNode = node;
+      reconTitle.textContent = node.nameZh;
+      reconDesc.textContent = node.descZh;
+      btnConfirm.disabled = !node.available;
+      btnConfirm.textContent = node.available ? '锁定航线 · 投入战役' : '不可通行';
+    };
+
+    btnConfirm.onclick = () => {
+      if (selectedNode && selectedNode.available) {
+        const confirmed = campaignMap.selectNode(selectedNode.id);
+        if (confirmed) {
+          sounds.playUiClick();
+          sounds.playPowerup();
+          this.clear();
+          onNodeSelected(confirmed);
+        }
+      }
+    };
 
     // Render from Boss floor down to Floor 0
     for (let f = campaignMap.floors.length - 1; f >= 0; f--) {
@@ -547,18 +772,25 @@ export class UIOverlay {
         btn.className = `tactical-node-badge ${node.available ? 'available' : ''} ${node.visited ? 'visited' : ''} ${node.id === campaignMap.currentNodeId ? 'current' : ''}`;
 
         btn.innerHTML = `
-          <div>${TacticalIcons.getMapNodeIcon(node.type, 32)}</div>
+          <div>${TacticalIcons.getMapNodeIcon(node.type, 30)}</div>
           <span class="tactical-node-label">${node.nameZh.slice(0, 4)}</span>
         `;
         btn.title = `${node.nameZh} // ${node.descZh}`;
 
+        btn.onmouseenter = () => {
+          sounds.playUiHover();
+          updateRecon(node);
+        };
+
         if (node.available) {
           btn.onclick = () => {
-            const selected = campaignMap.selectNode(node.id);
-            if (selected) {
+            updateRecon(node);
+            const confirmed = campaignMap.selectNode(node.id);
+            if (confirmed) {
+              sounds.playUiClick();
               sounds.playPowerup();
               this.clear();
-              onNodeSelected(selected);
+              onNodeSelected(confirmed);
             }
           };
         }
@@ -568,6 +800,8 @@ export class UIOverlay {
 
       nodesLayer.appendChild(row);
     }
+
+    this.attachAudioFeedback(box);
 
     backdrop.appendChild(box);
     this.container.appendChild(backdrop);
@@ -595,7 +829,7 @@ export class UIOverlay {
 
       <div class="console-main-title">战地黑市军械库 (ARMORY SHOP)</div>
       <div class="console-sub-title">消耗收集的废铁零件，采购特种弹药改质、全装甲大修或加固要塞白钢防线</div>
-      <div id="armory-items-list" style="margin-bottom: 24px;"></div>
+      <div id="armory-items-list" style="margin-bottom: 20px;"></div>
       <button class="mech-btn-primary" id="btn-leave-shop">完成补给 · 继续推进</button>
     `;
 
@@ -617,11 +851,12 @@ export class UIOverlay {
     repairRow.querySelector('#buy-repair')!.addEventListener('click', () => {
       if (playerInventory.spendScrap(30)) {
         onRepair();
+        sounds.playUiClick();
         sounds.playPowerup();
         this.clear();
         this.showShop(onLeave, onRepair, onFortify);
       } else {
-        alert('零件不足！');
+        sounds.playError();
       }
     });
     list.appendChild(repairRow);
@@ -642,11 +877,12 @@ export class UIOverlay {
     fortifyRow.querySelector('#buy-fortify')!.addEventListener('click', () => {
       if (playerInventory.spendScrap(40)) {
         onFortify();
+        sounds.playUiClick();
         sounds.playPowerup();
         this.clear();
         this.showShop(onLeave, onRepair, onFortify);
       } else {
-        alert('零件不足！');
+        sounds.playError();
       }
     });
     list.appendChild(fortifyRow);
@@ -669,20 +905,24 @@ export class UIOverlay {
       chipRow.querySelector(`#buy-chip-${chip.id}`)!.addEventListener('click', () => {
         if (playerInventory.spendScrap(chip.cost || 60)) {
           playerInventory.addChip(chip.id);
+          sounds.playUiClick();
           sounds.playPowerup();
           this.clear();
           this.showShop(onLeave, onRepair, onFortify);
         } else {
-          alert('零件不足！');
+          sounds.playError();
         }
       });
       list.appendChild(chipRow);
     });
 
     box.querySelector('#btn-leave-shop')!.addEventListener('click', () => {
+      sounds.playUiClick();
       this.clear();
       onLeave();
     });
+
+    this.attachAudioFeedback(box);
 
     backdrop.appendChild(box);
     this.container.appendChild(backdrop);
@@ -709,22 +949,25 @@ export class UIOverlay {
       <div class="console-main-title">战地地下机修站 (FIELD DEPOT)</div>
       <div class="console-sub-title">在交火间隙寻获地下整备车间，请选择一项战备抢修方案</div>
 
-      <div style="display: flex; gap: 24px; justify-content: center; margin-top: 20px;">
+      <div style="display: flex; gap: 24px; justify-content: center; margin-top: 18px;">
         <div class="mod-cartridge" id="rest-heal" style="--border-color: #22c55e; flex: 1;">
           <div class="cartridge-schematic">${TacticalIcons.getChipIcon('nanite_repair', 56)}</div>
           <div class="cartridge-title" style="color: #4ade80;">全面抢修大修</div>
           <div class="cartridge-desc">战车恢复 70% 最大生命值，并为老鹰要塞抢修恢复 50 点装甲。</div>
+          <div class="cartridge-equip-btn" style="border-color: #4ade80; color: #4ade80;">执行大修 (REPAIR)</div>
         </div>
         <div class="mod-cartridge" id="rest-upgrade" style="--border-color: #facc15; flex: 1;">
           <div class="cartridge-schematic">${TacticalIcons.getChipIcon('high_velocity', 56)}</div>
           <div class="cartridge-title" style="color: #fde047;">主炮火控升级</div>
           <div class="cartridge-desc">主炮星级提升 1 级，全面强化弹速、射速与穿透威力。</div>
+          <div class="cartridge-equip-btn" style="border-color: #fde047; color: #fde047;">校准升级 (UPGRADE)</div>
         </div>
       </div>
     `;
 
     box.querySelector('#rest-heal')!.addEventListener('click', () => {
       onFullHeal();
+      sounds.playUiClick();
       sounds.playPowerup();
       this.clear();
       onDone();
@@ -732,10 +975,13 @@ export class UIOverlay {
 
     box.querySelector('#rest-upgrade')!.addEventListener('click', () => {
       onUpgradeWeapon();
+      sounds.playUiClick();
       sounds.playPowerup();
       this.clear();
       onDone();
     });
+
+    this.attachAudioFeedback(box);
 
     backdrop.appendChild(box);
     this.container.appendChild(backdrop);
@@ -763,7 +1009,7 @@ export class UIOverlay {
       <div class="console-sub-title">前线雷达探测到一辆冒着浓烟的敌军原型实验车，车体内隐约有高能辐射反应。</div>
 
       <div style="display: flex; flex-direction: column; gap: 14px; margin: 20px 0;">
-        <button class="armory-row" id="opt-1" style="cursor: pointer; width: 100%;">
+        <button class="armory-row event-option-card" id="opt-1" style="cursor: pointer; width: 100%;">
           <div style="display: flex; align-items: center; gap: 16px;">
             ${TacticalIcons.getChipIcon('overdrive_thruster', 42)}
             <div>
@@ -772,7 +1018,7 @@ export class UIOverlay {
             </div>
           </div>
         </button>
-        <button class="armory-row" id="opt-2" style="cursor: pointer; width: 100%;">
+        <button class="armory-row event-option-card" id="opt-2" style="cursor: pointer; width: 100%;">
           <div style="display: flex; align-items: center; gap: 16px;">
             ${TacticalIcons.getChipIcon('scrap_collector', 42)}
             <div>
@@ -781,7 +1027,7 @@ export class UIOverlay {
             </div>
           </div>
         </button>
-        <button class="armory-row" id="opt-3" style="cursor: pointer; width: 100%;">
+        <button class="armory-row event-option-card" id="opt-3" style="cursor: pointer; width: 100%;">
           <div style="display: flex; align-items: center; gap: 16px;">
             ${TacticalIcons.getMapNodeIcon('event', 42)}
             <div>
@@ -809,9 +1055,12 @@ export class UIOverlay {
     });
 
     box.querySelector('#opt-3')!.addEventListener('click', () => {
+      sounds.playUiClick();
       this.clear();
       onDone();
     });
+
+    this.attachAudioFeedback(box);
 
     backdrop.appendChild(box);
     this.container.appendChild(backdrop);
@@ -871,9 +1120,12 @@ export class UIOverlay {
     `;
 
     box.querySelector('#btn-restart')!.addEventListener('click', () => {
+      sounds.playUiClick();
       this.clear();
       onRestart();
     });
+
+    this.attachAudioFeedback(box);
 
     backdrop.appendChild(box);
     this.container.appendChild(backdrop);
