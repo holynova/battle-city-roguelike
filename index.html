@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+    <title>钢铁誓约：重装肉鸽坦克 | Battle City: Rogue Bastion</title>
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🛡️</text></svg>" />
+    <style>
+      * {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+        -webkit-touch-callout: none;
+        -webkit-user-select: none;
+        user-select: none;
+      }
+      body {
+        background-color: #060911;
+        color: #f8fafc;
+        overflow: hidden;
+        width: 100vw;
+        height: 100vh;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "PingFang SC", "Microsoft YaHei", sans-serif;
+      }
+      #game-wrapper {
+        position: relative;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        box-shadow: 0 25px 60px -15px rgba(0, 0, 0, 0.9), 0 0 40px rgba(56, 189, 248, 0.15);
+        border-radius: 8px;
+        overflow: hidden;
+        background: #090d16;
+      }
+      #game-canvas {
+        display: block;
+        cursor: crosshair;
+      }
+      #ui-overlay {
+        position: absolute;
+        inset: 0;
+        pointer-events: none;
+        z-index: 10;
+      }
+      /* Mobile Controls Layer */
+      #mobile-controls {
+        display: none;
+        position: absolute;
+        bottom: 12px;
+        left: 0;
+        right: 0;
+        pointer-events: none;
+        z-index: 20;
+        padding: 0 20px;
+        justify-content: space-between;
+        align-items: flex-end;
+      }
+      @media (pointer: coarse), (max-width: 800px) {
+        #mobile-controls {
+          display: flex;
+        }
+      }
+      .touch-dpad {
+        pointer-events: auto;
+        display: grid;
+        grid-template-columns: repeat(3, 50px);
+        grid-template-rows: repeat(3, 50px);
+        gap: 6px;
+      }
+      .touch-btn {
+        background: rgba(30, 41, 59, 0.7);
+        border: 1px solid rgba(56, 189, 248, 0.4);
+        border-radius: 12px;
+        color: #f8fafc;
+        font-size: 20px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        backdrop-filter: blur(4px);
+        user-select: none;
+        touch-action: none;
+      }
+      .touch-btn:active {
+        background: rgba(56, 189, 248, 0.5);
+      }
+      .touch-actions {
+        pointer-events: auto;
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+      }
+      .touch-action-btn {
+        width: 70px;
+        height: 70px;
+        border-radius: 50%;
+        background: rgba(2, 132, 199, 0.75);
+        border: 2px solid rgba(56, 189, 248, 0.8);
+        color: white;
+        font-size: 14px;
+        font-weight: bold;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        touch-action: none;
+        box-shadow: 0 4px 15px rgba(2, 132, 199, 0.5);
+      }
+      .touch-action-btn:active {
+        background: rgba(3, 105, 161, 0.9);
+        transform: scale(0.95);
+      }
+    </style>
+  </head>
+  <body>
+    <div id="game-wrapper">
+      <canvas id="game-canvas"></canvas>
+      <div id="ui-overlay"></div>
+
+      <!-- Touch Controls for Mobile Devices -->
+      <div id="mobile-controls">
+        <div class="touch-dpad">
+          <div></div>
+          <button class="touch-btn" id="m-up">▲</button>
+          <div></div>
+          <button class="touch-btn" id="m-left">◀</button>
+          <div></div>
+          <button class="touch-btn" id="m-right">▶</button>
+          <div></div>
+          <button class="touch-btn" id="m-down">▼</button>
+          <div></div>
+        </div>
+        <div class="touch-actions">
+          <button class="touch-action-btn" id="m-dash" style="width: 56px; height: 56px; background: rgba(30, 41, 59, 0.8);">冲刺</button>
+          <button class="touch-action-btn" id="m-fire">开火</button>
+        </div>
+      </div>
+    </div>
+
+    <script type="module" src="/src/main.ts"></script>
+    <script>
+      // Setup Touch Buttons
+      window.addEventListener('DOMContentLoaded', () => {
+        const bindKey = (id, keyCode, code) => {
+          const btn = document.getElementById(id);
+          if (!btn) return;
+          const press = (e) => {
+            e.preventDefault();
+            window.dispatchEvent(new KeyboardEvent('keydown', { key: keyCode, code: code }));
+          };
+          const release = (e) => {
+            e.preventDefault();
+            window.dispatchEvent(new KeyboardEvent('keyup', { key: keyCode, code: code }));
+          };
+          btn.addEventListener('touchstart', press, { passive: false });
+          btn.addEventListener('touchend', release, { passive: false });
+          btn.addEventListener('mousedown', press);
+          btn.addEventListener('mouseup', release);
+        };
+        bindKey('m-up', 'w', 'KeyW');
+        bindKey('m-down', 's', 'KeyS');
+        bindKey('m-left', 'a', 'KeyA');
+        bindKey('m-right', 'd', 'KeyD');
+        bindKey('m-fire', ' ', 'Space');
+        bindKey('m-dash', 'Shift', 'ShiftLeft');
+      });
+    </script>
+  </body>
+</html>
