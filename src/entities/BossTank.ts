@@ -23,9 +23,9 @@ export class BossTank extends Tank {
   public laserDuration: number = 0;
 
   constructor(x: number, y: number) {
-    super(x, y, 1400, 60); // 1400 HP
-    this.shield = 400;
-    this.maxShield = 400;
+    super(x, y, 850, 50); // 850 HP, 50 speed
+    this.shield = 200;
+    this.maxShield = 200;
     this.radius = 52; // Massive Land Cruiser footprint
 
     this.chassisAngle = 0; // Patrols horizontally
@@ -93,20 +93,20 @@ export class BossTank extends Tank {
     // -------------------------------------------------------------
     this.mainGunCooldown -= dt;
     if (this.mainGunCooldown <= 0) {
-      this.mainGunCooldown = this.phase === 3 ? 1.2 : (this.phase === 2 ? 1.6 : 2.2);
+      this.mainGunCooldown = this.phase === 3 ? 1.6 : (this.phase === 2 ? 2.0 : 2.6);
 
-      const target = Math.random() < 0.6 ? playerPos : basePos;
+      const target = Math.random() < 0.5 ? playerPos : basePos;
       const angle = Math.atan2(target.y - this.y, target.x - this.x);
 
       // Heavy 203mm AP Shell
       spawnedBullets.push(new Projectile({
         x: this.x,
         y: this.y + 24,
-        vx: Math.cos(angle) * 340,
-        vy: Math.sin(angle) * 340,
+        vx: Math.cos(angle) * 260,
+        vy: Math.sin(angle) * 260,
         angle,
-        damage: 40,
-        speed: 340,
+        damage: 22,
+        speed: 260,
         owner: 'enemy',
         canBreakSteel: true,
         isMortar: true
@@ -119,16 +119,16 @@ export class BossTank extends Tank {
     // Guided Missiles Volley
     this.missileCooldown -= dt;
     if (this.missileCooldown <= 0) {
-      this.missileCooldown = this.phase === 3 ? 2.5 : 4.0;
+      this.missileCooldown = this.phase === 3 ? 3.2 : 4.5;
       for (const side of [-35, 35]) {
         spawnedBullets.push(new Projectile({
           x: this.x + side,
           y: this.y - 10,
-          vx: (side > 0 ? 1 : -1) * 80,
-          vy: 140,
+          vx: (side > 0 ? 1 : -1) * 70,
+          vy: 120,
           angle: Math.PI / 2,
-          damage: 25,
-          speed: 260,
+          damage: 14,
+          speed: 200,
           owner: 'enemy',
           isMissile: true,
           target: playerPos
@@ -143,20 +143,20 @@ export class BossTank extends Tank {
     if (this.phase >= 2) {
       this.danmakuCooldown -= dt;
       if (this.danmakuCooldown <= 0) {
-        this.danmakuCooldown = this.phase === 3 ? 0.35 : 0.6;
+        this.danmakuCooldown = this.phase === 3 ? 0.65 : 0.95;
         this.danmakuAngle += 0.32;
 
-        const bulletCount = this.phase === 3 ? 12 : 8;
+        const bulletCount = this.phase === 3 ? 8 : 6;
         for (let i = 0; i < bulletCount; i++) {
           const a = this.danmakuAngle + (i * Math.PI * 2 / bulletCount);
           spawnedBullets.push(new Projectile({
             x: this.x + Math.cos(a) * 44,
             y: this.y + Math.sin(a) * 44,
-            vx: Math.cos(a) * 220,
-            vy: Math.sin(a) * 220,
+            vx: Math.cos(a) * 170,
+            vy: Math.sin(a) * 170,
             angle: a,
-            damage: 18,
-            speed: 220,
+            damage: 10,
+            speed: 170,
             owner: 'enemy'
           }));
         }

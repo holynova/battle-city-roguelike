@@ -18,7 +18,7 @@ export class Inventory {
   }
 
   public reset() {
-    this.scraps = 25;
+    this.scraps = 50;
     this.chips.clear();
     this.weapons.clear();
     this.weapons.set('standard', 1);

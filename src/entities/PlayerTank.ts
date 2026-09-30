@@ -99,7 +99,7 @@ export class PlayerTank extends Tank {
 
   // Tactical Dodge Dash (i-frames to dodge bullets)
   public dashCooldown: number = 0;
-  public maxDashCooldown: number = 2.8;
+  public maxDashCooldown: number = 1.5;
   public isDashing: boolean = false;
   public dashDuration: number = 0;
   public dashGhosts: DashGhost[] = [];
@@ -107,7 +107,7 @@ export class PlayerTank extends Tank {
 
   // Fire control
   public fireCooldown: number = 0;
-  public maxFireCooldown: number = 0.38; // base reload time
+  public maxFireCooldown: number = 0.30; // base reload time
 
   // Recoil animation
   public recoilOffset: number = 0;
@@ -120,9 +120,9 @@ export class PlayerTank extends Tank {
   private vy: number = 0;
 
   constructor(x: number, y: number) {
-    super(x, y, 100, 160);
-    this.shield = 25;
-    this.maxShield = 25;
+    super(x, y, 120, 175); // 120 HP, 175 base speed
+    this.shield = 50; // 50 energy shield
+    this.maxShield = 50;
     this.chassisAngle = -Math.PI / 2; // Facing UP initially
     this.turretAngle = -Math.PI / 2;
   }
@@ -301,9 +301,9 @@ export class PlayerTank extends Tank {
 
     this.dashCooldown = this.maxDashCooldown;
     this.isDashing = true;
-    this.dashDuration = 0.35;
+    this.dashDuration = 0.38;
     // 100% Invulnerability during dash to dodge bullets safely!
-    this.invulnerableTimer = 0.40;
+    this.invulnerableTimer = 0.48;
 
     const hasOverdrive = playerInventory.hasChip('overdrive_thruster');
     if (hasOverdrive) {
@@ -348,8 +348,8 @@ export class PlayerTank extends Tank {
     const hasVelocity = playerInventory.hasChip('high_velocity');
     const hasRapid = playerInventory.hasChip('rapid_loader');
 
-    const cooldownMod = (hasRapid ? 0.72 : 1.0) * levelCooldownMod;
-    const baseDamage = (hasVelocity ? 38 : 32) * levelDmgMod;
+    const cooldownMod = (hasRapid ? 0.70 : 1.0) * levelCooldownMod;
+    const baseDamage = (hasVelocity ? 46 : 38) * levelDmgMod;
 
     const bullets: Projectile[] = [];
 
@@ -471,7 +471,7 @@ export class PlayerTank extends Tank {
       case 'standard':
       default: {
         // 6. Heavy AP Kinetic Ballistic Artillery (Twin-barrel spread if unlocked, ricochet bounce)
-        this.fireCooldown = 0.35 * cooldownMod;
+        this.fireCooldown = 0.28 * cooldownMod;
         const speed = hasVelocity ? 480 : 380;
         const bounceCount = (hasBouncing ? 2 : 0) + (level >= 3 ? 1 : 0);
         if (hasDual || level >= 2) {

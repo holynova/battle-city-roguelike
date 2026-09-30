@@ -21,20 +21,20 @@ export class EnemyTank extends Tank {
   private targetType: 'player' | 'base' = 'player'; // Prioritize player for aggressive combat
 
   constructor(x: number, y: number, enemyClass: EnemyClass, isBonus: boolean = false) {
-    let hp = 30;
-    let speed = 130;
+    let hp = 25;
+    let speed = 100;
     if (enemyClass === 'scout') {
-      hp = 30;
-      speed = 195; // Very agile
+      hp = 22;
+      speed = 145; // Reasonable, dodgeable
     } else if (enemyClass === 'assault') {
-      hp = 75;
-      speed = 135;
-    } else if (enemyClass === 'heavy') {
-      hp = 160;
-      speed = 85;
-    } else if (enemyClass === 'missile') {
-      hp = 60;
+      hp = 45;
       speed = 105;
+    } else if (enemyClass === 'heavy') {
+      hp = 95; // 3-4 hits to destroy instead of 7
+      speed = 65;
+    } else if (enemyClass === 'missile') {
+      hp = 38;
+      speed = 85;
     }
 
     super(x, y, hp, speed);
@@ -44,8 +44,8 @@ export class EnemyTank extends Tank {
     this.chassisAngle = Math.PI / 2;
     this.turretAngle = Math.PI / 2;
 
-    this.shootCooldown = 0.3 + Math.random() * 0.8;
-    this.changeDirTimer = 0.8 + Math.random() * 1.2;
+    this.shootCooldown = 0.8 + Math.random() * 1.2;
+    this.changeDirTimer = 1.2 + Math.random() * 1.5;
   }
 
   public update(
@@ -67,12 +67,12 @@ export class EnemyTank extends Tank {
     const distToPlayer = Math.hypot(playerPos.x - this.x, playerPos.y - this.y);
     const angleToPlayer = Math.atan2(playerPos.y - this.y, playerPos.x - this.x);
 
-    // Dynamic Turret Tracking: If player is nearby, turret tracks player!
-    if (distToPlayer < 360) {
+    // Dynamic Turret Tracking: If player is nearby, turret tracks player gently
+    if (distToPlayer < 260) {
       let diff = angleToPlayer - this.turretAngle;
       while (diff > Math.PI) diff -= Math.PI * 2;
       while (diff < -Math.PI) diff += Math.PI * 2;
-      this.turretAngle += diff * Math.min(1.0, dt * 12);
+      this.turretAngle += diff * Math.min(1.0, dt * 4.0);
     } else {
       this.turretAngle = this.chassisAngle;
     }
@@ -80,18 +80,18 @@ export class EnemyTank extends Tank {
     // AI Direction Decisions
     this.changeDirTimer -= dt;
     if (this.changeDirTimer <= 0) {
-      this.changeDirTimer = 1.0 + Math.random() * 1.2;
+      this.changeDirTimer = 1.2 + Math.random() * 1.5;
 
-      // 70% chance to target player directly, 30% to target base
-      this.targetType = Math.random() < 0.7 ? 'player' : 'base';
+      // 45% chance to target player, 55% to target base or wander
+      this.targetType = Math.random() < 0.45 ? 'player' : 'base';
       const target = this.targetType === 'base' ? basePos : playerPos;
 
       const dx = target.x - this.x;
       const dy = target.y - this.y;
 
-      if (Math.abs(dy) > Math.abs(dx) && Math.random() < 0.75) {
+      if (Math.abs(dy) > Math.abs(dx) && Math.random() < 0.65) {
         this.chassisAngle = dy > 0 ? Math.PI / 2 : -Math.PI / 2;
-      } else if (Math.random() < 0.75) {
+      } else if (Math.random() < 0.65) {
         this.chassisAngle = dx > 0 ? 0 : Math.PI;
       } else {
         const dirs = [0, Math.PI / 2, Math.PI, -Math.PI / 2];
@@ -109,27 +109,27 @@ export class EnemyTank extends Tank {
       this.y = ny;
 
       this.treadTimer += dt;
-      if (this.treadTimer >= 0.15) {
+      if (this.treadTimer >= 0.18) {
         this.treadTimer = 0;
         vfx.addTreadMark(this.x, this.y, this.chassisAngle);
       }
     } else {
       // Wall blocked: immediately turn or destroy
-      this.shootCooldown = 0.05;
+      this.shootCooldown = 0.15;
       const dirs = [0, Math.PI / 2, Math.PI, -Math.PI / 2];
       this.chassisAngle = dirs[Math.floor(Math.random() * dirs.length)];
-      this.changeDirTimer = 0.6;
+      this.changeDirTimer = 0.8;
     }
 
     // -------------------------------------------------------------
-    // High-Aggression Shooting AI
+    // Fair & Balanced Shooting AI
     // -------------------------------------------------------------
     this.shootCooldown -= dt;
     if (this.shootCooldown <= 0) {
-      this.shootCooldown = this.enemyClass === 'assault' ? 0.8 : (this.enemyClass === 'scout' ? 0.9 : 1.2);
+      this.shootCooldown = this.enemyClass === 'assault' ? 1.6 : (this.enemyClass === 'scout' ? 1.5 : 1.9);
 
-      const bulletSpeed = this.enemyClass === 'scout' ? 360 : 280;
-      const bulletDamage = this.enemyClass === 'heavy' ? 30 : (this.enemyClass === 'scout' ? 14 : 20);
+      const bulletSpeed = this.enemyClass === 'scout' ? 240 : 200;
+      const bulletDamage = this.enemyClass === 'heavy' ? 16 : (this.enemyClass === 'scout' ? 8 : 12);
 
       const muzzleX = this.x + Math.cos(this.turretAngle) * 26;
       const muzzleY = this.y + Math.sin(this.turretAngle) * 26;
@@ -138,11 +138,11 @@ export class EnemyTank extends Tank {
         spawnedBullets.push(new Projectile({
           x: muzzleX,
           y: muzzleY,
-          vx: Math.cos(this.turretAngle) * 240,
-          vy: Math.sin(this.turretAngle) * 240,
+          vx: Math.cos(this.turretAngle) * 200,
+          vy: Math.sin(this.turretAngle) * 200,
           angle: this.turretAngle,
-          damage: 28,
-          speed: 240,
+          damage: 15,
+          speed: 200,
           owner: 'enemy',
           isMissile: true,
           target: playerPos
@@ -150,7 +150,7 @@ export class EnemyTank extends Tank {
         sounds.playShoot('missile');
       } else if (this.enemyClass === 'assault') {
         // Dual parallel burst
-        for (const side of [-6, 6]) {
+        for (const side of [-5, 5]) {
           const perpX = Math.cos(this.turretAngle + Math.PI / 2) * side;
           const perpY = Math.sin(this.turretAngle + Math.PI / 2) * side;
           spawnedBullets.push(new Projectile({
@@ -159,7 +159,7 @@ export class EnemyTank extends Tank {
             vx: Math.cos(this.turretAngle) * bulletSpeed,
             vy: Math.sin(this.turretAngle) * bulletSpeed,
             angle: this.turretAngle,
-            damage: 16,
+            damage: 8,
             speed: bulletSpeed,
             owner: 'enemy'
           }));

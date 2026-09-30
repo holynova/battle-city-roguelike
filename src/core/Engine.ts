@@ -377,16 +377,16 @@ export class Engine {
       // Elite Commander Encounter!
       this.eliteEnemy = new EliteTank(338, 120, node.eliteVariant || 'ignis');
       this.enemies.push(this.eliteEnemy);
-      this.totalEnemiesToSpawn = 22; // 22 minion reinforcements + Elite Commander
+      this.totalEnemiesToSpawn = 5; // 5 minion reinforcements + Elite Commander
       this.enemiesSpawnedCount = 1;
-      this.spawnCooldown = 0.6;
+      this.spawnCooldown = 1.6;
       sounds.playBaseAlarm();
       bgm.playTrack('boss');
     } else {
-      // High-intensity regular wave (18-26 tanks)
-      this.totalEnemiesToSpawn = 18 + Math.floor(node.floor * 0.7);
+      // Balanced tactical regular wave (10-16 tanks)
+      this.totalEnemiesToSpawn = 10 + Math.floor(node.floor * 0.4);
       this.enemiesSpawnedCount = 0;
-      this.spawnCooldown = 0.3;
+      this.spawnCooldown = 1.2;
       bgm.playTrack('battle');
     }
   }
@@ -625,16 +625,13 @@ export class Engine {
       }
     }
 
-    // High-Density Enemy Spawning (up to 8 simultaneous tanks)
+    // Fair Enemy Spawning: max 4 simultaneous enemies (2 during elite encounter)
+    const maxAlive = this.eliteEnemy ? 2 : 4;
     if (!this.isBossFight && this.enemiesSpawnedCount < this.totalEnemiesToSpawn) {
       this.spawnCooldown -= dt;
-      if (this.spawnCooldown <= 0 && this.enemies.length < 8) {
-        this.spawnCooldown = 0.9 + Math.random() * 0.7;
+      if (this.spawnCooldown <= 0 && this.enemies.length < maxAlive) {
+        this.spawnCooldown = 1.8 + Math.random() * 0.8;
         this.spawnOneEnemy();
-        // Burst spawn second enemy if battlefield is clear
-        if (this.enemies.length < 4 && this.enemiesSpawnedCount < this.totalEnemiesToSpawn) {
-          this.spawnOneEnemy();
-        }
       }
     }
 
@@ -646,7 +643,7 @@ export class Engine {
 
       if (!e.isAlive) {
         playerInventory.kills++;
-        const scrapReward = e instanceof EliteTank ? 80 : (e instanceof BossTank ? 200 : 15);
+        const scrapReward = e instanceof EliteTank ? 100 : (e instanceof BossTank ? 260 : 20);
         playerInventory.addScrap(scrapReward);
         this.vfx.spawnFloatingText(e.x, e.y - 30, `+${scrapReward} 零件`, '#facc15');
 
@@ -656,8 +653,8 @@ export class Engine {
           this.vfx.spawnFloatingText(this.player.x, this.player.y - 20, '+12 HP (吸取)', '#22c55e');
         }
 
-        // Drop Powerup
-        if ((e instanceof EnemyTank && e.isBonusTank) || Math.random() < 0.20) {
+        // Generous Powerup Drop (35% chance + bonus tanks guaranteed)
+        if ((e instanceof EnemyTank && e.isBonusTank) || Math.random() < 0.35) {
           const types: PowerUpType[] = ['star', 'clock', 'bomb', 'shovel', 'helmet', 'repair', 'scrap'];
           const picked = types[Math.floor(Math.random() * types.length)];
           this.powerUps.push(new PowerUp(e.x, e.y, picked));

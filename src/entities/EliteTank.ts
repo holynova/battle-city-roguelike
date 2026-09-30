@@ -30,24 +30,24 @@ export class EliteTank extends Tank {
   public mines: { x: number; y: number; timer: number; radius: number }[] = [];
 
   constructor(x: number, y: number, eliteType: EliteType) {
-    let hp = 450;
-    let shield = 120;
-    let speed = 95;
+    let hp = 280;
+    let shield = 80;
+    let speed = 80;
     let nameZh = '鬼火掠食者';
     let titleZh = '精英指挥官';
     let color = '#ef4444';
 
     if (eliteType === 'storm') {
-      hp = 700;
-      shield = 180;
-      speed = 85;
+      hp = 380;
+      shield = 120;
+      speed = 75;
       nameZh = '雷暴泰坦破坏者';
       titleZh = '特装原型机';
       color = '#38bdf8';
     } else if (eliteType === 'void') {
-      hp = 950;
-      shield = 250;
-      speed = 80;
+      hp = 480;
+      shield = 150;
+      speed = 70;
       nameZh = '虚空引力巨擘';
       titleZh = '深渊禁卫司令';
       color = '#10b981';
@@ -129,19 +129,19 @@ export class EliteTank extends Tank {
     this.specialAttackTimer += dt;
 
     if (this.eliteType === 'ignis') {
-      // 1. Ignis: 3-way spread incendiary shotgun every 1.4s
-      if (this.attackTimer >= 1.4) {
+      // 1. Ignis: 3-way spread incendiary shotgun every 1.8s
+      if (this.attackTimer >= 1.8) {
         this.attackTimer = 0;
         for (const spread of [-0.35, 0, 0.35]) {
           const shootAngle = this.turretAngle + spread;
           spawnedBullets.push(new Projectile({
             x: this.x + Math.cos(shootAngle) * 32,
             y: this.y + Math.sin(shootAngle) * 32,
-            vx: Math.cos(shootAngle) * 310,
-            vy: Math.sin(shootAngle) * 310,
+            vx: Math.cos(shootAngle) * 240,
+            vy: Math.sin(shootAngle) * 240,
             angle: shootAngle,
-            damage: 22,
-            speed: 310,
+            damage: 12,
+            speed: 240,
             owner: 'enemy',
             isIncendiary: true
           }));
@@ -150,25 +150,25 @@ export class EliteTank extends Tank {
         vfx.spawnMuzzleFlash(this.x, this.y, this.turretAngle, '#ef4444');
       }
 
-      // Special: Drop proximity cluster landmines every 5.0s
-      if (this.specialAttackTimer >= 5.0) {
+      // Special: Drop proximity cluster landmines every 6.0s
+      if (this.specialAttackTimer >= 6.0) {
         this.specialAttackTimer = 0;
-        vfx.addFirePool(this.x, this.y, 60, 3.5);
+        vfx.addFirePool(this.x, this.y, 50, 3.0);
         vfx.spawnFloatingText(this.x, this.y - 30, '⚠️ 部署高爆地雷', '#ef4444');
         sounds.playShoot('napalm');
       }
     } else if (this.eliteType === 'storm') {
-      // 2. Storm Titan: Regular heavy electric shot every 1.2s
-      if (this.attackTimer >= 1.2) {
+      // 2. Storm Titan: Regular heavy electric shot every 1.6s
+      if (this.attackTimer >= 1.6) {
         this.attackTimer = 0;
         spawnedBullets.push(new Projectile({
           x: this.x + Math.cos(this.turretAngle) * 32,
           y: this.y + Math.sin(this.turretAngle) * 32,
-          vx: Math.cos(this.turretAngle) * 380,
-          vy: Math.sin(this.turretAngle) * 380,
+          vx: Math.cos(this.turretAngle) * 290,
+          vy: Math.sin(this.turretAngle) * 290,
           angle: this.turretAngle,
-          damage: 28,
-          speed: 380,
+          damage: 15,
+          speed: 290,
           owner: 'enemy',
           isTesla: true
         }));
@@ -176,19 +176,19 @@ export class EliteTank extends Tank {
         vfx.spawnMuzzleFlash(this.x, this.y, this.turretAngle, '#38bdf8');
       }
 
-      // Special: 8-Way Radial Danmaku Electric Ring every 4.0s!
-      if (this.specialAttackTimer >= 4.0) {
+      // Special: 8-Way Radial Danmaku Electric Ring every 5.0s!
+      if (this.specialAttackTimer >= 5.0) {
         this.specialAttackTimer = 0;
         for (let i = 0; i < 8; i++) {
           const a = (i * Math.PI / 4) + this.danmakuAngle;
           spawnedBullets.push(new Projectile({
             x: this.x + Math.cos(a) * 32,
             y: this.y + Math.sin(a) * 32,
-            vx: Math.cos(a) * 230,
-            vy: Math.sin(a) * 230,
+            vx: Math.cos(a) * 180,
+            vy: Math.sin(a) * 180,
             angle: a,
-            damage: 20,
-            speed: 230,
+            damage: 10,
+            speed: 180,
             owner: 'enemy',
             isTesla: true
           }));
@@ -200,7 +200,7 @@ export class EliteTank extends Tank {
       }
     } else if (this.eliteType === 'void') {
       // 3. Void Dreadnought: Continuous Swirling Danmaku Spiral
-      if (this.attackTimer >= 0.35) {
+      if (this.attackTimer >= 0.55) {
         this.attackTimer = 0;
         this.danmakuAngle += 0.45;
         for (let i = 0; i < 3; i++) {
@@ -208,28 +208,28 @@ export class EliteTank extends Tank {
           spawnedBullets.push(new Projectile({
             x: this.x + Math.cos(a) * 32,
             y: this.y + Math.sin(a) * 32,
-            vx: Math.cos(a) * 210,
-            vy: Math.sin(a) * 210,
+            vx: Math.cos(a) * 170,
+            vy: Math.sin(a) * 170,
             angle: a,
-            damage: 18,
-            speed: 210,
+            damage: 9,
+            speed: 170,
             owner: 'enemy'
           }));
         }
         sounds.playShoot('standard');
       }
 
-      // Special: Launch Gravitational Vortex Shell every 5.5s
-      if (this.specialAttackTimer >= 5.5) {
+      // Special: Launch Gravitational Vortex Shell every 6.5s
+      if (this.specialAttackTimer >= 6.5) {
         this.specialAttackTimer = 0;
         spawnedBullets.push(new Projectile({
           x: this.x + Math.cos(this.turretAngle) * 36,
           y: this.y + Math.sin(this.turretAngle) * 36,
-          vx: Math.cos(this.turretAngle) * 260,
-          vy: Math.sin(this.turretAngle) * 260,
+          vx: Math.cos(this.turretAngle) * 200,
+          vy: Math.sin(this.turretAngle) * 200,
           angle: this.turretAngle,
-          damage: 35,
-          speed: 260,
+          damage: 16,
+          speed: 200,
           owner: 'enemy',
           isVortex: true
         }));
