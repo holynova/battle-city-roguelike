@@ -53,22 +53,28 @@ export class UIOverlay {
   // Get comic-book illustration for upgrade card
   private getCardArtUrl(chipId: string): string {
     switch (chipId) {
+      case 'weapon_tesla':
+      case 'tesla_coil':
+      case 'laser_beam':
+      case 'weapon_laser':
+        return './assets/images/card_tesla_coil.jpg';
       case 'dual_barrel':
       case 'high_velocity':
       case 'rapid_loader':
+      case 'weapon_standard':
         return './assets/images/card_twin_barrel.jpg';
       case 'shield_generator':
       case 'reinforced_armor':
       case 'eagle_nano_shield':
         return './assets/images/card_energy_shield.jpg';
-      case 'tesla_coil':
-      case 'laser_beam':
-        return './assets/images/card_tesla_coil.jpg';
       case 'vampiric_scavenger':
       case 'steel_breaker':
+      case 'weapon_vortex':
         return './assets/images/card_vampiric_scavenger.jpg';
+      case 'weapon_napalm':
       case 'artillery_barrage':
       case 'bouncing_rounds':
+      case 'weapon_cryo':
         return './assets/images/goliath_boss_portrait.jpg';
       default:
         return './assets/images/slay_camp_rest.jpg';
@@ -79,7 +85,9 @@ export class UIOverlay {
     const attackIds = ['high_velocity', 'rapid_loader', 'bouncing_rounds', 'dual_barrel', 'explosive_shrapnel', 'laser_beam', 'artillery_barrage'];
     const powerIds = ['reinforced_armor', 'scrap_collector', 'nanite_repair', 'vampiric_scavenger', 'eagle_point_defense', 'eagle_nano_shield', 'steel_breaker'];
 
-    if (attackIds.includes(chip.id)) {
+    if (chip.id.startsWith('weapon_')) {
+      return { typeZh: '核心主炮 (WEAPON)', cost: 2, color: '#f59e0b' };
+    } else if (attackIds.includes(chip.id)) {
       return { typeZh: '攻击模块 (ATTACK)', cost: 1, color: '#ef4444' };
     } else if (powerIds.includes(chip.id)) {
       return { typeZh: '核心能力 (POWER)', cost: 2, color: '#a855f7' };
@@ -98,7 +106,10 @@ export class UIOverlay {
       .replace(/生命值/g, '<span class="kw-bold kw-hp">生命值</span>')
       .replace(/电弧/g, '<span class="kw-bold kw-tesla">电弧</span>')
       .replace(/吸取/g, '<span class="kw-bold kw-vamp">吸取</span>')
-      .replace(/激光/g, '<span class="kw-bold kw-laser">激光</span>');
+      .replace(/激光/g, '<span class="kw-bold kw-laser">激光</span>')
+      .replace(/烈焰/g, '<span class="kw-bold kw-attack">烈焰</span>')
+      .replace(/冰霜/g, '<span class="kw-bold kw-bounce">冰霜</span>')
+      .replace(/引力/g, '<span class="kw-bold kw-tesla">引力</span>');
   }
 
   private injectStyles() {
@@ -367,9 +378,22 @@ export class UIOverlay {
         height: 100%;
         display: flex;
         flex-direction: column;
-        justify-content: space-around;
-        padding: 20px 40px;
+        gap: 36px;
+        padding: 40px 30px;
         position: relative;
+        overflow-y: auto;
+        overflow-x: hidden;
+        scroll-behavior: smooth;
+      }
+      .spire-map-scroll-area::-webkit-scrollbar {
+        width: 8px;
+      }
+      .spire-map-scroll-area::-webkit-scrollbar-track {
+        background: rgba(14, 10, 6, 0.6);
+      }
+      .spire-map-scroll-area::-webkit-scrollbar-thumb {
+        background: #8d6e40;
+        border-radius: 4px;
       }
       .spire-map-floor-row {
         display: flex;
@@ -806,7 +830,6 @@ export class UIOverlay {
       card.addEventListener('click', () => {
         sounds.playModuleEquip();
         sounds.playPowerup();
-        playerInventory.addChip(chip.id);
         this.clear();
         onSelect(chip);
       });
@@ -873,7 +896,7 @@ export class UIOverlay {
             <span>${playerInventory.scraps} 零件</span>
           </div>
           <div class="spire-stat-pill act">
-            <span>第 1 幕：前哨水堑 // FLOOR ${campaignMap.currentFloor + 1} OF 5</span>
+            <span>第 ${Math.floor(campaignMap.currentFloor / 4) + 1} 幕 // FLOOR ${campaignMap.currentFloor + 1} OF ${campaignMap.totalFloors}</span>
           </div>
         </div>
         <div style="font-family: 'Share Tech Mono', monospace; font-size: 12px; color: #ffd700;">
@@ -980,6 +1003,16 @@ export class UIOverlay {
 
       nodesArea.appendChild(row);
     }
+
+    // Auto-scroll to active / available node
+    requestAnimationFrame(() => {
+      const activeEl = nodesArea.querySelector('.spire-map-node.available, .spire-map-node.current') as HTMLElement;
+      if (activeEl) {
+        activeEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      } else {
+        nodesArea.scrollTop = nodesArea.scrollHeight;
+      }
+    });
 
     this.attachAudioFeedback(box);
 

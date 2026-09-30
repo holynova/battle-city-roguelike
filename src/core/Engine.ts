@@ -3,19 +3,16 @@
  * Seamless Fullscreen Architecture, Intelligent Auto-Aim/Fire, and Elemental Arsenal:
  * - Dynamic Viewport scaling with zero jarring division lines
  * - Auto-Aim with nearest enemy detection, smooth turret slerp, and auto-fire
- * - Real elemental combat mechanics:
- *   * Light: Piercing laser beam with prism refraction
- *   * Electricity: Tesla ball lightning with radial arcing EMP stun
- *   * Wind: Gale vortex singularity with enemy suction and bullet deflection
- *   * Fire: Napalm mortar with persistent burning ground fire zones
- *   * Ice: Cryo frost nova with wide sub-zero freezing and brittle shatter
- *   * Heavy AP: Ballistic artillery with kinetic bouncing
+ * - True i-frame tactical dodge dash (phases bullets with "DODGE" feedback and afterimages)
+ * - White hit flashes, directional knockback sparks, and screen damage pulse vignette
+ * - 16-Floor campaign with 3 Elite Commanders and 3-Phase Goliath Boss
  */
 
 import { TileMap } from '../map/TileMap';
 import { PlayerTank } from '../entities/PlayerTank';
 import { Tank } from '../entities/Tank';
 import { EnemyTank, EnemyClass } from '../entities/EnemyTank';
+import { EliteTank } from '../entities/EliteTank';
 import { BossTank } from '../entities/BossTank';
 import { EagleBase } from '../entities/EagleBase';
 import { Projectile } from '../entities/Projectile';
@@ -48,7 +45,9 @@ export class Engine {
   public map: TileMap;
   public player: PlayerTank;
   public eagleBase: EagleBase;
-  public enemies: (EnemyTank | BossTank)[] = [];
+  public enemies: (EnemyTank | EliteTank | BossTank)[] = [];
+  public eliteEnemy: EliteTank | null = null;
+  public bossEnemy: BossTank | null = null;
   public projectiles: Projectile[] = [];
   public powerUps: PowerUp[] = [];
   public vfx: ParticleFX;
@@ -57,23 +56,24 @@ export class Engine {
   // Auto-Aim & Auto-Fire Settings
   public autoAim: boolean = true;
   public autoFire: boolean = true;
-  public currentTarget: (EnemyTank | BossTank) | null = null;
+  public currentTarget: (EnemyTank | EliteTank | BossTank) | null = null;
 
   // Wave Director
   private isBossFight: boolean = false;
-  private totalEnemiesToSpawn: number = 14;
+  private totalEnemiesToSpawn: number = 18;
   private enemiesSpawnedCount: number = 0;
-  private spawnCooldown: number = 1.0;
+  private spawnCooldown: number = 0.5;
   private spawnPoints = [
     { x: 36, y: 36 },
     { x: 338, y: 36 },
     { x: 640, y: 36 }
   ];
 
-  // Screen Shake & Hit Stop
+  // Screen Shake, Hit Stop & Screen Damage Pulse
   private screenShakeTime: number = 0;
   private screenShakeMagnitude: number = 0;
   private hitStopTimer: number = 0;
+  private playerDamagePulse: number = 0;
 
   // Base Defense Cooldown
   private basePointDefenseTimer: number = 0;
@@ -222,7 +222,7 @@ export class Engine {
       if (this.state !== 'PLAYING') return;
 
       // Check if clicking on bottom weapon dock first
-      const clickedWeapon = HUD.getWeaponSlotAt(this.width, this.height, this.mouseCanvasX, this.mouseCanvasY);
+      const clickedWeapon = HUD.getWeaponSlotAt(this.width, this.height, this.mouseCanvasX, this.mouseCanvasY, this.player);
       if (clickedWeapon) {
         this.player.setWeapon(clickedWeapon);
         return;
@@ -232,7 +232,7 @@ export class Engine {
         this.isMouseDown = true;
         this.triggerPlayerFire();
       } else if (e.button === 2) {
-        // Right click: Dash
+        // Right click: Tactical Dodge Dash
         e.preventDefault();
         this.player.tryDash(this.vfx);
       }
@@ -265,6 +265,7 @@ export class Engine {
   public startRun() {
     this.ui.clear();
     playerInventory.reset();
+    this.player.syncWeapons();
     campaignMap.generateAct(1);
     this.showCampaignMap();
   }
@@ -324,6 +325,9 @@ export class Engine {
     this.state = 'PLAYING';
     this.isBossFight = node.type === 'boss';
 
+    // Synchronize weapons
+    this.player.syncWeapons();
+
     // Reset battlefield
     this.map.loadLevel(node.floor, node.col, node.type);
     this.player.x = 4 * 52 + 26;
@@ -336,20 +340,33 @@ export class Engine {
     this.eagleBase.hasNanoShield = playerInventory.hasChip('eagle_nano_shield');
 
     this.enemies = [];
+    this.eliteEnemy = null;
+    this.bossEnemy = null;
     this.projectiles = [];
     this.powerUps = [];
 
     if (this.isBossFight) {
-      // Spawn Goliath Boss at top center
-      this.enemies.push(new BossTank(338, 120));
+      // Final Boss: Land Cruiser Goliath
+      this.bossEnemy = new BossTank(338, 120);
+      this.enemies.push(this.bossEnemy);
       this.totalEnemiesToSpawn = 1;
       this.enemiesSpawnedCount = 1;
       sounds.playBaseAlarm();
       bgm.playTrack('boss');
+    } else if (node.type === 'elite') {
+      // Elite Commander Encounter!
+      this.eliteEnemy = new EliteTank(338, 120, node.eliteVariant || 'ignis');
+      this.enemies.push(this.eliteEnemy);
+      this.totalEnemiesToSpawn = 22; // 22 minion reinforcements + Elite Commander
+      this.enemiesSpawnedCount = 1;
+      this.spawnCooldown = 0.6;
+      sounds.playBaseAlarm();
+      bgm.playTrack('boss');
     } else {
-      this.totalEnemiesToSpawn = node.type === 'elite' ? 16 : 12;
+      // High-intensity regular wave (18-26 tanks)
+      this.totalEnemiesToSpawn = 18 + Math.floor(node.floor * 0.7);
       this.enemiesSpawnedCount = 0;
-      this.spawnCooldown = 0.5;
+      this.spawnCooldown = 0.3;
       bgm.playTrack('battle');
     }
   }
@@ -363,7 +380,7 @@ export class Engine {
     // Boss win check
     if (this.isBossFight) {
       this.state = 'VICTORY';
-      this.ui.showResult(true, '你成功粉碎了要塞终极陆上战舰「歌利亚」，捍卫了老鹰基地！', () => {
+      this.ui.showResult(true, '你成功粉碎了要塞终极陆上巡洋舰「歌利亚」，彻底解放了钢铁要塞！', () => {
         this.showStartMenu();
       });
       return;
@@ -371,10 +388,15 @@ export class Engine {
 
     // Three-Pick-One Card Draft
     this.ui.showCardDraft((chip) => {
-      // Apply immediate effects if any
-      if (chip.id === 'reinforced_armor') {
-        this.player.maxHp += 40;
-        this.player.hp += 40;
+      if (chip.id !== 'skip') {
+        // Add chip / upgrade weapon
+        playerInventory.addChip(chip.id);
+        this.player.syncWeapons();
+
+        if (chip.id === 'reinforced_armor') {
+          this.player.maxHp += 40;
+          this.player.hp += 40;
+        }
       }
       this.showCampaignMap();
     });
@@ -405,6 +427,11 @@ export class Engine {
       return;
     }
 
+    // Player damage pulse decay
+    if (this.playerDamagePulse > 0) {
+      this.playerDamagePulse = Math.max(0, this.playerDamagePulse - dt * 2.2);
+    }
+
     // Water ripple animation timer
     this.waterAnimTimer += dt;
     if (this.waterAnimTimer > 0.2) {
@@ -416,7 +443,7 @@ export class Engine {
     // Auto-Aim & Target Scanning
     // -------------------------------------------------------------
     if (this.autoAim) {
-      let closest: (EnemyTank | BossTank) | null = null;
+      let closest: (EnemyTank | EliteTank | BossTank) | null = null;
       let minDist = Infinity;
       for (const e of this.enemies) {
         if (e.isAlive) {
@@ -485,7 +512,7 @@ export class Engine {
           if (e.isAlive) {
             const dist = Math.hypot(e.x - v.x, e.y - v.y);
             if (dist < v.radius) {
-              e.takeDamage(45, this.vfx);
+              e.takeDamage(45, this.vfx, Math.atan2(e.y - v.y, e.x - v.x), 15);
               e.applyStun(1.0);
               const push = (1 - dist / v.radius) * 60;
               e.x += ((e.x - v.x) / (dist || 1)) * push;
@@ -508,7 +535,7 @@ export class Engine {
           if (e.isAlive) {
             const dist = Math.hypot(e.x - fp.x, e.y - fp.y);
             if (dist < fp.radius) {
-              e.takeDamage(12, this.vfx);
+              e.takeDamage(14, this.vfx);
               e.applyBurn(3.0);
             }
           }
@@ -540,7 +567,6 @@ export class Engine {
       this.basePointDefenseTimer += dt;
       if (this.basePointDefenseTimer >= 1.2) {
         this.basePointDefenseTimer = 0;
-        // Find closest enemy
         let closest: Tank | null = null;
         let minDist = 400;
         for (const e of this.enemies) {
@@ -568,12 +594,16 @@ export class Engine {
       }
     }
 
-    // Enemy Spawning
+    // High-Density Enemy Spawning (up to 8 simultaneous tanks)
     if (!this.isBossFight && this.enemiesSpawnedCount < this.totalEnemiesToSpawn) {
       this.spawnCooldown -= dt;
-      if (this.spawnCooldown <= 0 && this.enemies.length < 5) {
-        this.spawnCooldown = 2.0 + Math.random() * 1.5;
+      if (this.spawnCooldown <= 0 && this.enemies.length < 8) {
+        this.spawnCooldown = 0.9 + Math.random() * 0.7;
         this.spawnOneEnemy();
+        // Burst spawn second enemy if battlefield is clear
+        if (this.enemies.length < 4 && this.enemiesSpawnedCount < this.totalEnemiesToSpawn) {
+          this.spawnOneEnemy();
+        }
       }
     }
 
@@ -585,8 +615,9 @@ export class Engine {
 
       if (!e.isAlive) {
         playerInventory.kills++;
-        playerInventory.addScrap(15);
-        this.vfx.spawnFloatingText(e.x, e.y - 30, '+15 零件', '#facc15');
+        const scrapReward = e instanceof EliteTank ? 80 : (e instanceof BossTank ? 200 : 15);
+        playerInventory.addScrap(scrapReward);
+        this.vfx.spawnFloatingText(e.x, e.y - 30, `+${scrapReward} 零件`, '#facc15');
 
         // Vampiric perk
         if (playerInventory.hasChip('vampiric_scavenger')) {
@@ -594,8 +625,8 @@ export class Engine {
           this.vfx.spawnFloatingText(this.player.x, this.player.y - 20, '+12 HP (吸取)', '#22c55e');
         }
 
-        // Drop Powerup if bonus tank or small random chance
-        if ((e instanceof EnemyTank && e.isBonusTank) || Math.random() < 0.15) {
+        // Drop Powerup
+        if ((e instanceof EnemyTank && e.isBonusTank) || Math.random() < 0.20) {
           const types: PowerUpType[] = ['star', 'clock', 'bomb', 'shovel', 'helmet', 'repair', 'scrap'];
           const picked = types[Math.floor(Math.random() * types.length)];
           this.powerUps.push(new PowerUp(e.x, e.y, picked));
@@ -616,7 +647,7 @@ export class Engine {
       const p = this.powerUps[i];
       p.update(dt);
 
-      // Scrap magnet perk: suck powerups toward player
+      // Scrap magnet perk
       if (playerInventory.hasChip('scrap_collector')) {
         const dx = this.player.x - p.x;
         const dy = this.player.y - p.y;
@@ -650,7 +681,7 @@ export class Engine {
       b.update(dt);
 
       if (!b.isAlive) {
-        // Trigger detonation on timeout for certain weapons
+        // Trigger detonation on timeout
         if (b.isVortex && b.owner === 'player') {
           this.vfx.addVortex(b.x, b.y, 180, 3.5);
           sounds.playVortex();
@@ -662,7 +693,7 @@ export class Engine {
         continue;
       }
 
-      // Tesla Periodic Discharge to nearby enemies during flight
+      // Tesla Periodic Discharge during flight
       if (b.isTesla && b.owner === 'player') {
         b.dischargeTimer += dt;
         if (b.dischargeTimer >= 0.12) {
@@ -671,7 +702,7 @@ export class Engine {
             if (e.isAlive) {
               const d = Math.hypot(e.x - b.x, e.y - b.y);
               if (d < 150) {
-                e.takeDamage(10, this.vfx);
+                e.takeDamage(12, this.vfx, Math.atan2(e.y - b.y, e.x - b.x), 2);
                 e.applyStun(0.7);
                 this.vfx.addLightningArc(b.x, b.y, e.x, e.y, '#38bdf8');
                 sounds.playTeslaArc();
@@ -685,8 +716,8 @@ export class Engine {
       const hitResult = this.map.hitTile(b.x, b.y, b.angle, b.canBreakSteel, this.vfx);
       if (hitResult.hit) {
         if (b.isLaser) {
-          // Laser Prism Refraction upon hitting Steel Wall
           if (hitResult.ricochet && !b.isRefracted) {
+            // Prism Refraction
             for (const offset of [-0.75, 0.75]) {
               const refAngle = b.angle + offset;
               this.projectiles.push(new Projectile({
@@ -723,7 +754,7 @@ export class Engine {
           sounds.playFreeze();
           for (const e of this.enemies) {
             if (e.isAlive && Math.hypot(e.x - b.x, e.y - b.y) < 130) {
-              e.takeDamage(b.damage, this.vfx);
+              e.takeDamage(b.damage, this.vfx, Math.atan2(e.y - b.y, e.x - b.x), 5);
               e.applyFreeze(2.8);
             }
           }
@@ -748,12 +779,23 @@ export class Engine {
         }
       }
 
-      // 3. Player Collision
+      // 3. Player Collision (Check Tactical Dodge i-frames!)
       if (b.owner === 'enemy') {
         const distToPlayer = Math.hypot(b.x - this.player.x, b.y - this.player.y);
         if (distToPlayer < this.player.radius + b.radius) {
-          this.player.takeDamage(b.damage, this.vfx);
-          this.screenShake(0.18, 5);
+          if (this.player.isDashing) {
+            // Perfect Tactical Dodge! Phase bullet through harmlessly!
+            this.vfx.spawnFloatingText(this.player.x, this.player.y - 25, '⚡ 完美闪避 (DODGE)', '#38bdf8');
+            this.vfx.spawnMuzzleFlash(b.x, b.y, b.angle, '#38bdf8');
+            b.isAlive = false;
+            this.projectiles.splice(i, 1);
+            continue;
+          }
+
+          // Normal hit
+          this.player.takeDamage(b.damage, this.vfx, b.angle, 5);
+          this.playerDamagePulse = 1.0;
+          this.screenShake(0.22, 6);
           sounds.playExplosion(false);
           this.projectiles.splice(i, 1);
           continue;
@@ -769,10 +811,11 @@ export class Engine {
             if (b.isLaser) {
               if (!b.hitTargets.has(e)) {
                 b.hitTargets.add(e);
-                e.takeDamage(b.damage, this.vfx);
+                e.takeDamage(b.damage, this.vfx, b.angle, 4);
                 sounds.playExplosion(false);
-                // Prism refraction on Boss
-                if (e instanceof BossTank && !b.isRefracted) {
+
+                // Prism refraction on Boss or Elite
+                if ((e instanceof BossTank || e instanceof EliteTank) && !b.isRefracted) {
                   for (const offset of [-0.75, 0.75]) {
                     const refAngle = b.angle + offset;
                     this.projectiles.push(new Projectile({
@@ -791,7 +834,7 @@ export class Engine {
                   this.vfx.spawnPrismRefraction(b.x, b.y, b.angle);
                 }
               }
-              // Laser pierces through, do not remove bullet
+              // Pierces through enemies
               continue;
             }
 
@@ -800,7 +843,7 @@ export class Engine {
               sounds.playFreeze();
               for (const target of this.enemies) {
                 if (target.isAlive && Math.hypot(target.x - b.x, target.y - b.y) < 130) {
-                  target.takeDamage(b.damage, this.vfx);
+                  target.takeDamage(b.damage, this.vfx, Math.atan2(target.y - b.y, target.x - b.x), 5);
                   target.applyFreeze(2.8);
                 }
               }
@@ -823,7 +866,7 @@ export class Engine {
             }
 
             // Standard / Tesla Hit
-            e.takeDamage(b.damage, this.vfx);
+            e.takeDamage(b.damage, this.vfx, b.angle, 4);
             if (b.isTesla) {
               e.applyStun(1.0);
               this.chainLightning(e);
@@ -869,7 +912,7 @@ export class Engine {
       if (e !== source && e.isAlive) {
         const d = Math.hypot(e.x - source.x, e.y - source.y);
         if (d < 160) {
-          e.takeDamage(20, this.vfx);
+          e.takeDamage(22, this.vfx, Math.atan2(e.y - source.y, e.x - source.x), 3);
           e.applyStun(0.8);
           this.vfx.addLightningArc(source.x, source.y, e.x, e.y, '#38bdf8');
           this.vfx.spawnFloatingText(e.x, e.y - 20, 'TESLA CHAIN!', '#38bdf8');
@@ -899,10 +942,10 @@ export class Engine {
         break;
       case 'bomb':
         for (const e of this.enemies) {
-          if (!(e instanceof BossTank)) {
+          if (!(e instanceof BossTank) && !(e instanceof EliteTank)) {
             e.takeDamage(999, this.vfx);
           } else {
-            e.takeDamage(80, this.vfx);
+            e.takeDamage(120, this.vfx);
           }
         }
         sounds.playExplosion(true);
@@ -939,7 +982,6 @@ export class Engine {
     ctx.shadowBlur = 10;
 
     const bLen = 10;
-    // 4 Corner Brackets
     for (let i = 0; i < 4; i++) {
       ctx.rotate(Math.PI / 2);
       ctx.beginPath();
@@ -1018,7 +1060,7 @@ export class Engine {
     this.ctx.fillStyle = '#0f172a';
     this.ctx.fillRect(0, 0, this.arenaSize, this.arenaSize);
 
-    // Subtle ambient glow border (no harsh dividing lines)
+    // Subtle ambient glow border
     ctxSoftGlow: {
       const grad = this.ctx.createRadialGradient(
         this.arenaSize / 2, this.arenaSize / 2, this.arenaSize * 0.4,
@@ -1044,7 +1086,7 @@ export class Engine {
       p.render(this.ctx);
     }
 
-    // 5. Enemies
+    // 5. Enemies (Enemies, Elites, and Bosses)
     for (const e of this.enemies) {
       e.render(this.ctx);
     }
@@ -1062,7 +1104,7 @@ export class Engine {
       b.render(this.ctx);
     }
 
-    // Dynamic Lighting Bloom Pass (Illuminates battlefield and obstacles)
+    // Dynamic Lighting Bloom Pass
     this.ctx.save();
     this.ctx.globalCompositeOperation = 'lighter';
     for (const b of this.projectiles) {
@@ -1078,13 +1120,28 @@ export class Engine {
     }
     this.ctx.restore();
 
-    // 8. Top Tile Layer (Forests that hide tanks underneath!)
+    // 8. Top Tile Layer (Forests)
     this.map.renderTopLayer(this.ctx);
 
     // 9. Particle VFX, Lightning Arcs & Floating Combat Texts
     this.vfx.renderVFX(this.ctx);
 
     this.ctx.restore();
+
+    // -------------------------------------------------------------
+    // Screen Damage Pulse Vignette (Pulsating blood red when hurt or critical HP)
+    // -------------------------------------------------------------
+    if (this.playerDamagePulse > 0 || (this.player.hp / this.player.maxHp < 0.3 && this.player.isAlive)) {
+      const alpha = Math.max(this.playerDamagePulse * 0.45, (this.player.hp / this.player.maxHp < 0.3 ? 0.25 + Math.sin(Date.now() * 0.01) * 0.15 : 0));
+      const vigGrad = this.ctx.createRadialGradient(
+        this.width / 2, this.height / 2, Math.min(this.width, this.height) * 0.35,
+        this.width / 2, this.height / 2, Math.max(this.width, this.height) * 0.65
+      );
+      vigGrad.addColorStop(0, 'rgba(239, 68, 68, 0)');
+      vigGrad.addColorStop(1, `rgba(185, 28, 28, ${alpha})`);
+      this.ctx.fillStyle = vigGrad;
+      this.ctx.fillRect(0, 0, this.width, this.height);
+    }
 
     // -------------------------------------------------------------
     // RENDER FLOATING COMBAT HUD & WEAPON SELECTOR DOCK
@@ -1103,7 +1160,9 @@ export class Engine {
         campaignMap.currentFloor,
         this.isBossFight,
         this.map.currentThemeName,
-        this.autoAim
+        this.autoAim,
+        this.eliteEnemy,
+        this.bossEnemy
       );
     }
 

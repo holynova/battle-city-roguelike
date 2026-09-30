@@ -1,6 +1,7 @@
 /**
  * Player Tank Entity
- * Supports dual-axis chassis/turret control, tactical dash, modular weapons, and perks.
+ * Supports dual-axis chassis/turret control, tactical dodge dash (i-frames & afterimages),
+ * progressive weapon unlocking, stacking upgrades, and perks.
  */
 
 import { Tank } from './Tank';
@@ -29,7 +30,7 @@ export const WEAPON_REGISTRY: Record<WeaponType, WeaponInfo> = {
     nameEn: 'Twin AP Cannon',
     icon: '⚔️',
     color: '#facc15',
-    desc: '高膛压穿甲弹，击穿砖墙，钢壁跳弹'
+    desc: '高膛压穿甲弹，击穿砖墙，钢壁跳弹增伤'
   },
   laser: {
     type: 'laser',
@@ -69,9 +70,17 @@ export const WEAPON_REGISTRY: Record<WeaponType, WeaponInfo> = {
     nameEn: 'Cryo Frost Nova',
     icon: '❄️',
     color: '#93c5fd',
-    desc: ' sub-zero 冻结弹，大范围绝对冻结敌坦并脆化'
+    desc: 'sub-zero 冻结弹，大范围绝对冻结敌坦并脆化'
   }
 };
+
+export interface DashGhost {
+  x: number;
+  y: number;
+  chassisAngle: number;
+  turretAngle: number;
+  alpha: number;
+}
 
 export class PlayerTank extends Tank {
   // Input states
@@ -80,18 +89,21 @@ export class PlayerTank extends Tank {
   public aimX: number = 0;
   public aimY: number = 0;
 
-  // Active Weapon Selection
+  // Active Weapon Selection (Starts with ONLY standard, unlocks via 3-pick-1 card draft)
   public currentWeapon: WeaponType = 'standard';
-  public unlockedWeapons: WeaponType[] = ['standard', 'laser', 'tesla', 'vortex', 'napalm', 'cryo'];
+  public unlockedWeapons: WeaponType[] = ['standard'];
+  public weaponLevels: Map<WeaponType, number> = new Map([['standard', 1]]);
 
   // Aiming mode: 'mouse' (twin-stick) or 'classic' (fixed to heading)
   public aimMode: 'mouse' | 'classic' = 'mouse';
 
-  // Tactical Dash
+  // Tactical Dodge Dash (i-frames to dodge bullets)
   public dashCooldown: number = 0;
-  public maxDashCooldown: number = 3.5;
+  public maxDashCooldown: number = 2.8;
   public isDashing: boolean = false;
   public dashDuration: number = 0;
+  public dashGhosts: DashGhost[] = [];
+  private ghostTimer: number = 0;
 
   // Fire control
   public fireCooldown: number = 0;
@@ -115,6 +127,25 @@ export class PlayerTank extends Tank {
     this.turretAngle = -Math.PI / 2;
   }
 
+  // Synchronize weapons and stacking upgrade levels from run inventory
+  public syncWeapons() {
+    this.unlockedWeapons = [];
+    for (const [wTypeStr, lvl] of playerInventory.weapons.entries()) {
+      const wType = wTypeStr as WeaponType;
+      if (WEAPON_REGISTRY[wType]) {
+        this.unlockedWeapons.push(wType);
+        this.weaponLevels.set(wType, lvl);
+      }
+    }
+    if (!this.unlockedWeapons.includes(this.currentWeapon)) {
+      this.currentWeapon = this.unlockedWeapons[0] || 'standard';
+    }
+  }
+
+  public getWeaponLevel(type: WeaponType): number {
+    return this.weaponLevels.get(type) || 0;
+  }
+
   public update(dt: number, map: TileMap, vfx: ParticleFX): Projectile[] {
     const spawnedBullets: Projectile[] = [];
 
@@ -132,7 +163,7 @@ export class PlayerTank extends Tank {
     this.speed = (hasTurbo ? 210 : 160) * (hasHover ? 1.25 : 1.0);
     if (this.freezeTimer > 0) this.speed *= 0.5;
 
-    this.maxDashCooldown = hasOverdrive ? 1.8 : (hasTurbo ? 2.8 : 3.5);
+    this.maxDashCooldown = hasOverdrive ? 1.6 : (hasTurbo ? 2.2 : 2.8);
     this.maxFireCooldown = (hasRapid ? 0.25 : 0.38);
 
     // Passive repair
@@ -167,7 +198,7 @@ export class PlayerTank extends Tank {
         const normX = this.moveX / inputLen;
         const normY = this.moveY / inputLen;
 
-        const currentMoveSpeed = this.isDashing ? this.speed * 2.8 : this.speed;
+        const currentMoveSpeed = this.isDashing ? this.speed * 3.4 : this.speed;
         targetVx = normX * currentMoveSpeed;
         targetVy = normY * currentMoveSpeed;
 
@@ -176,7 +207,7 @@ export class PlayerTank extends Tank {
         let diff = targetAngle - this.chassisAngle;
         while (diff > Math.PI) diff -= Math.PI * 2;
         while (diff < -Math.PI) diff += Math.PI * 2;
-        this.chassisAngle += diff * Math.min(1.0, dt * 14);
+        this.chassisAngle += diff * Math.min(1.0, dt * (this.isDashing ? 28 : 14));
 
         // Tread mark generation
         this.treadTimer += dt;
@@ -184,24 +215,51 @@ export class PlayerTank extends Tank {
           this.treadTimer = 0;
           vfx.addTreadMark(this.x, this.y, this.chassisAngle);
         }
+      } else if (this.isDashing) {
+        // If dashing without directional input, surge forward in chassis direction
+        targetVx = Math.cos(this.chassisAngle) * this.speed * 3.4;
+        targetVy = Math.sin(this.chassisAngle) * this.speed * 3.4;
       }
     }
 
-    // Dash status handling
+    // Dash status and afterimage generation
     if (this.isDashing) {
       this.dashDuration -= dt;
+      this.ghostTimer += dt;
+      if (this.ghostTimer >= 0.05) {
+        this.ghostTimer = 0;
+        this.dashGhosts.push({
+          x: this.x,
+          y: this.y,
+          chassisAngle: this.chassisAngle,
+          turretAngle: this.turretAngle,
+          alpha: 0.8
+        });
+      }
+
+      // Thrust exhaust particles
+      vfx.spawnMuzzleFlash(this.x, this.y, this.chassisAngle + Math.PI, '#38bdf8');
       if (hasOverdrive) {
-        // Fire trail
         vfx.spawnMuzzleFlash(this.x, this.y, this.chassisAngle + Math.PI, '#ef4444');
       }
+
       if (this.dashDuration <= 0) {
         this.isDashing = false;
       }
     }
 
+    // Fade dash afterimage ghosts
+    for (let i = this.dashGhosts.length - 1; i >= 0; i--) {
+      const g = this.dashGhosts[i];
+      g.alpha -= dt * 3.5;
+      if (g.alpha <= 0) {
+        this.dashGhosts.splice(i, 1);
+      }
+    }
+
     // Acceleration & friction (slippery on ice)
-    const frictionFactor = onIce ? 0.98 : 0.82;
-    const accelFactor = onIce ? 0.1 : 0.35;
+    const frictionFactor = onIce ? 0.98 : (this.isDashing ? 0.94 : 0.82);
+    const accelFactor = onIce ? 0.1 : (this.isDashing ? 0.6 : 0.35);
     this.vx = this.vx * Math.pow(frictionFactor, dt * 60) + targetVx * accelFactor;
     this.vy = this.vy * Math.pow(frictionFactor, dt * 60) + targetVy * accelFactor;
 
@@ -210,7 +268,6 @@ export class PlayerTank extends Tank {
     if (!map.checkTankCollision(newX, this.y, this.radius, hasHover)) {
       this.x = newX;
     } else {
-      // If has Ramming Prow and hits brick, smash it!
       if (hasRam) {
         this.smashNearbyBricks(map, vfx);
       }
@@ -232,20 +289,21 @@ export class PlayerTank extends Tank {
     if (this.aimMode === 'mouse') {
       this.turretAngle = Math.atan2(this.aimY - this.y, this.aimX - this.x);
     } else {
-      // Classic mode: turret follows chassis heading
       this.turretAngle = this.chassisAngle;
     }
 
     return spawnedBullets;
   }
 
-  // Trigger Tactical Dash
+  // Trigger Tactical Dodge Dash (i-frames to dodge bullets)
   public tryDash(vfx: ParticleFX): boolean {
     if (this.dashCooldown > 0 || this.stunTimer > 0) return false;
 
     this.dashCooldown = this.maxDashCooldown;
     this.isDashing = true;
-    this.dashDuration = 0.25;
+    this.dashDuration = 0.35;
+    // 100% Invulnerability during dash to dodge bullets safely!
+    this.invulnerableTimer = 0.40;
 
     const hasOverdrive = playerInventory.hasChip('overdrive_thruster');
     if (hasOverdrive) {
@@ -253,11 +311,12 @@ export class PlayerTank extends Tank {
     }
 
     vfx.spawnExplosion(this.x, this.y, false);
+    vfx.spawnFloatingText(this.x, this.y - 25, '⚡ 战术闪避 (DODGE)', '#38bdf8');
     sounds.playDash();
     return true;
   }
 
-  // Switch active weapon
+  // Switch active weapon (only to unlocked weapons)
   public setWeapon(type: WeaponType) {
     if (this.unlockedWeapons.includes(type)) {
       this.currentWeapon = type;
@@ -267,6 +326,7 @@ export class PlayerTank extends Tank {
 
   // Cycle active weapon (e.g. via mouse wheel)
   public cycleWeapon(dir: number = 1) {
+    if (this.unlockedWeapons.length <= 1) return;
     const idx = this.unlockedWeapons.indexOf(this.currentWeapon);
     const nextIdx = (idx + dir + this.unlockedWeapons.length) % this.unlockedWeapons.length;
     this.setWeapon(this.unlockedWeapons[nextIdx]);
@@ -278,14 +338,18 @@ export class PlayerTank extends Tank {
 
     this.recoilOffset = 6;
 
+    const level = this.getWeaponLevel(this.currentWeapon) || 1;
+    const levelDmgMod = 1 + (level - 1) * 0.35;
+    const levelCooldownMod = 1 / (1 + (level - 1) * 0.16);
+
     const hasDual = playerInventory.hasChip('dual_barrel');
     const hasSteelBreaker = playerInventory.hasChip('steel_breaker') || playerInventory.starsCollected >= 3;
     const hasBouncing = playerInventory.hasChip('bouncing_rounds');
     const hasVelocity = playerInventory.hasChip('high_velocity');
     const hasRapid = playerInventory.hasChip('rapid_loader');
 
-    const cooldownMod = hasRapid ? 0.72 : 1.0;
-    const baseDamage = hasVelocity ? 38 : 32;
+    const cooldownMod = (hasRapid ? 0.72 : 1.0) * levelCooldownMod;
+    const baseDamage = (hasVelocity ? 38 : 32) * levelDmgMod;
 
     const bullets: Projectile[] = [];
 
@@ -328,7 +392,7 @@ export class PlayerTank extends Tank {
           vx: Math.cos(this.turretAngle) * 220,
           vy: Math.sin(this.turretAngle) * 220,
           angle: this.turretAngle,
-          damage: baseDamage * 1.2,
+          damage: baseDamage * 1.25,
           speed: 220,
           owner: 'player',
           canBreakSteel: hasSteelBreaker,
@@ -349,7 +413,7 @@ export class PlayerTank extends Tank {
           vx: Math.cos(this.turretAngle) * 420,
           vy: Math.sin(this.turretAngle) * 420,
           angle: this.turretAngle,
-          damage: baseDamage * 1.1,
+          damage: baseDamage * 1.15,
           speed: 420,
           owner: 'player',
           canBreakSteel: hasSteelBreaker,
@@ -370,7 +434,7 @@ export class PlayerTank extends Tank {
           vx: Math.cos(this.turretAngle) * 290,
           vy: Math.sin(this.turretAngle) * 290,
           angle: this.turretAngle,
-          damage: baseDamage * 1.4,
+          damage: baseDamage * 1.45,
           speed: 290,
           owner: 'player',
           canBreakSteel: hasSteelBreaker,
@@ -392,7 +456,7 @@ export class PlayerTank extends Tank {
           vx: Math.cos(this.turretAngle) * 380,
           vy: Math.sin(this.turretAngle) * 380,
           angle: this.turretAngle,
-          damage: baseDamage * 1.3,
+          damage: baseDamage * 1.35,
           speed: 380,
           owner: 'player',
           canBreakSteel: hasSteelBreaker,
@@ -409,7 +473,8 @@ export class PlayerTank extends Tank {
         // 6. Heavy AP Kinetic Ballistic Artillery (Twin-barrel spread if unlocked, ricochet bounce)
         this.fireCooldown = 0.35 * cooldownMod;
         const speed = hasVelocity ? 480 : 380;
-        if (hasDual) {
+        const bounceCount = (hasBouncing ? 2 : 0) + (level >= 3 ? 1 : 0);
+        if (hasDual || level >= 2) {
           const perpX = Math.cos(this.turretAngle + Math.PI / 2) * 8;
           const perpY = Math.sin(this.turretAngle + Math.PI / 2) * 8;
           for (const side of [-1, 1]) {
@@ -422,8 +487,8 @@ export class PlayerTank extends Tank {
               damage: baseDamage * 0.95,
               speed,
               owner: 'player',
-              canBreakSteel: hasSteelBreaker,
-              bouncesLeft: hasBouncing ? 2 : 0,
+              canBreakSteel: hasSteelBreaker || level >= 4,
+              bouncesLeft: bounceCount,
               elementType: 'kinetic'
             }));
           }
@@ -439,7 +504,7 @@ export class PlayerTank extends Tank {
             speed,
             owner: 'player',
             canBreakSteel: hasSteelBreaker,
-            bouncesLeft: hasBouncing ? 2 : 0,
+            bouncesLeft: bounceCount,
             elementType: 'kinetic'
           }));
           sounds.playShoot('standard');
@@ -472,8 +537,35 @@ export class PlayerTank extends Tank {
   public render(ctx: CanvasRenderingContext2D) {
     if (!this.isAlive) return;
 
+    // 1. Draw Tactical Dash Afterimage Ghosts
+    for (const g of this.dashGhosts) {
+      ctx.save();
+      ctx.translate(g.x, g.y);
+      ctx.globalAlpha = g.alpha * 0.45;
+
+      // Cyan Ghost Chassis
+      ctx.save();
+      ctx.rotate(g.chassisAngle + Math.PI / 2);
+      ctx.drawImage(HDGraphics.getPlayerChassis(), -32, -32, 64, 64);
+      ctx.restore();
+
+      // Ghost Turret
+      ctx.save();
+      ctx.rotate(g.turretAngle + Math.PI / 2);
+      ctx.drawImage(HDGraphics.getPlayerTurret('single'), -32, -32, 64, 64);
+      ctx.restore();
+
+      ctx.restore();
+    }
+
     ctx.save();
     ctx.translate(this.x, this.y);
+
+    // Hit Flash feedback
+    if (this.hitFlashTimer > 0) {
+      ctx.shadowColor = '#ffffff';
+      ctx.shadowBlur = 18;
+    }
 
     // Draw Chassis (Treads & Hull aligned with movement heading)
     ctx.save();
@@ -491,16 +583,23 @@ export class PlayerTank extends Tank {
     ctx.rotate(this.turretAngle + Math.PI / 2);
 
     let barrelType: 'single' | 'dual' | 'heavy' | 'laser' = 'single';
-    if (playerInventory.hasChip('railgun_laser')) barrelType = 'laser';
-    else if (playerInventory.hasChip('mortar_siege')) barrelType = 'heavy';
-    else if (playerInventory.hasChip('dual_barrel')) barrelType = 'dual';
+    if (this.currentWeapon === 'laser') barrelType = 'laser';
+    else if (this.currentWeapon === 'napalm' || this.currentWeapon === 'vortex' || this.currentWeapon === 'cryo' || this.currentWeapon === 'tesla') barrelType = 'heavy';
+    else if (this.currentWeapon === 'standard' && (playerInventory.hasChip('dual_barrel') || this.getWeaponLevel('standard') >= 2)) barrelType = 'dual';
 
     const turretTex = HDGraphics.getPlayerTurret(barrelType);
     ctx.drawImage(turretTex, -half, -half, 64, 64);
     ctx.restore();
 
-    // Draw Invulnerability / Shield Forcefield
-    if (this.invulnerableTimer > 0) {
+    // Draw Invulnerability / Shield Forcefield / Dash i-frame barrier
+    if (this.isDashing) {
+      // High-speed cyan dodge vortex ring
+      ctx.strokeStyle = `rgba(56, 189, 248, 0.85)`;
+      ctx.lineWidth = 3.5;
+      ctx.beginPath();
+      ctx.arc(0, 0, this.radius + 8, 0, Math.PI * 2);
+      ctx.stroke();
+    } else if (this.invulnerableTimer > 0) {
       ctx.strokeStyle = `rgba(74, 222, 128, ${0.5 + Math.sin(Date.now() * 0.015) * 0.3})`;
       ctx.lineWidth = 3;
       ctx.beginPath();

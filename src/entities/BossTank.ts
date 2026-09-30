@@ -1,6 +1,6 @@
 /**
- * Epic Boss Tank: Land Cruiser "Goliath" (多炮塔陆上巡洋舰)
- * Multi-turret, phased attacks, missile barrages, and dynamic destruction states.
+ * Epic Boss Tank: Land Cruiser "Goliath" (多炮塔陆上巡洋舰 MK-IV)
+ * 3-Phase Multi-Turret Super-Boss with Danmaku Bullet Hell, Sweeping Laser, and Carpet Bombing.
  */
 
 import { Tank } from './Tank';
@@ -11,18 +11,24 @@ import { HDGraphics } from '../graphics/HDGraphics';
 import { sounds } from '../audio/SoundEffects';
 
 export class BossTank extends Tank {
-  public phase: 1 | 2 = 1;
+  public phase: 1 | 2 | 3 = 1;
   private mainGunCooldown: number = 2.0;
-  private subGunsCooldown: number = 0.8;
-  private missileCooldown: number = 4.0;
+  private missileCooldown: number = 3.5;
+  private danmakuCooldown: number = 1.8;
+  private laserCooldown: number = 4.0;
+  private danmakuAngle: number = 0;
+
+  public isLaserFiring: boolean = false;
+  public laserAngle: number = Math.PI / 2;
+  public laserDuration: number = 0;
 
   constructor(x: number, y: number) {
-    super(x, y, 450, 55); // 450 HP
-    this.shield = 100;
-    this.maxShield = 100;
-    this.radius = 48; // Huge footprint
+    super(x, y, 1400, 60); // 1400 HP
+    this.shield = 400;
+    this.maxShield = 400;
+    this.radius = 52; // Massive Land Cruiser footprint
 
-    this.chassisAngle = Math.PI / 2; // Facing down
+    this.chassisAngle = 0; // Patrols horizontally
     this.turretAngle = Math.PI / 2;
   }
 
@@ -38,12 +44,20 @@ export class BossTank extends Tank {
 
     this.updateStatus(dt, vfx);
 
-    // Phase transition check
-    if (this.hp <= this.maxHp * 0.5 && this.phase === 1) {
-      this.phase = 2;
-      this.speed = 85; // Enrage speed boost
+    // Phase Transitions
+    const hpRatio = this.hp / this.maxHp;
+    if (hpRatio <= 0.30 && this.phase < 3) {
+      this.phase = 3;
+      this.speed = 95;
       vfx.spawnExplosion(this.x, this.y, true);
-      vfx.spawnFloatingText(this.x, this.y - 40, '⚠️ BOSS ENRAGED! PHASE 2 ⚠️', '#ef4444');
+      vfx.spawnFloatingText(this.x, this.y - 45, '⚠️ CRITICAL OVERDRIVE: PHASE 3 ⚠️', '#ef4444');
+      sounds.playExplosion(true);
+      sounds.playBaseAlarm();
+    } else if (hpRatio <= 0.65 && this.phase < 2) {
+      this.phase = 2;
+      this.speed = 80;
+      vfx.spawnExplosion(this.x, this.y, true);
+      vfx.spawnFloatingText(this.x, this.y - 45, '⚠️ GOLIATH ENRAGED: PHASE 2 ⚠️', '#f59e0b');
       sounds.playExplosion(true);
       sounds.playBaseAlarm();
     }
@@ -54,7 +68,7 @@ export class BossTank extends Tank {
     for (let r = row - 1; r <= row + 1; r++) {
       for (let c = col - 1; c <= col + 1; c++) {
         if (r >= 0 && r < map.rows && c >= 0 && c < map.cols) {
-          if (map.grid[r][c] === 1) { // Brick
+          if (map.grid[r][c] === 1) {
             map.grid[r][c] = 0;
             vfx.spawnBrickDebris(c * map.tileSize + 26, r * map.tileSize + 26);
             sounds.playBrickDestroy();
@@ -63,126 +77,190 @@ export class BossTank extends Tank {
       }
     }
 
-    // Movement: Patrol horizontally across top/middle of map
+    // Movement: Patrol horizontally across upper arena
     const moveDist = this.speed * dt;
     this.x += Math.cos(this.chassisAngle) * moveDist;
-    if (this.x < 120) {
-      this.x = 120;
-      this.chassisAngle = 0; // Turn right
-    } else if (this.x > map.cols * map.tileSize - 120) {
-      this.x = map.cols * map.tileSize - 120;
-      this.chassisAngle = Math.PI; // Turn left
+    if (this.x < 130) {
+      this.x = 130;
+      this.chassisAngle = 0; // Move right
+    } else if (this.x > map.cols * map.tileSize - 130) {
+      this.x = map.cols * map.tileSize - 130;
+      this.chassisAngle = Math.PI; // Move left
     }
 
-    // Main Siege Cannon
+    // -------------------------------------------------------------
+    // PHASE 1 ATTACKS: Heavy Artillery & Missiles
+    // -------------------------------------------------------------
     this.mainGunCooldown -= dt;
     if (this.mainGunCooldown <= 0) {
-      this.mainGunCooldown = this.phase === 2 ? 1.4 : 2.2;
+      this.mainGunCooldown = this.phase === 3 ? 1.2 : (this.phase === 2 ? 1.6 : 2.2);
 
-      // Fires heavy explosive shells aimed toward player or base
-      const target = Math.random() < 0.5 ? playerPos : basePos;
+      const target = Math.random() < 0.6 ? playerPos : basePos;
       const angle = Math.atan2(target.y - this.y, target.x - this.x);
 
+      // Heavy 203mm AP Shell
       spawnedBullets.push(new Projectile({
         x: this.x,
-        y: this.y + 20,
-        vx: Math.cos(angle) * 320,
-        vy: Math.sin(angle) * 320,
+        y: this.y + 24,
+        vx: Math.cos(angle) * 340,
+        vy: Math.sin(angle) * 340,
         angle,
-        damage: 45,
-        speed: 320,
+        damage: 40,
+        speed: 340,
         owner: 'enemy',
         canBreakSteel: true,
         isMortar: true
       }));
 
       sounds.playShoot('heavy');
-      vfx.spawnMuzzleFlash(this.x, this.y + 40, angle, '#ef4444');
+      vfx.spawnMuzzleFlash(this.x, this.y + 36, angle, '#ef4444');
     }
 
-    // Sub-guns rapid fire (tracking player)
-    this.subGunsCooldown -= dt;
-    if (this.subGunsCooldown <= 0) {
-      this.subGunsCooldown = 0.7;
-      const angleToPlayer = Math.atan2(playerPos.y - this.y, playerPos.x - this.x);
-
-      // Left gun
-      spawnedBullets.push(new Projectile({
-        x: this.x - 30,
-        y: this.y + 10,
-        vx: Math.cos(angleToPlayer) * 360,
-        vy: Math.sin(angleToPlayer) * 360,
-        angle: angleToPlayer,
-        damage: 18,
-        speed: 360,
-        owner: 'enemy'
-      }));
-
-      // Right gun
-      spawnedBullets.push(new Projectile({
-        x: this.x + 30,
-        y: this.y + 10,
-        vx: Math.cos(angleToPlayer) * 360,
-        vy: Math.sin(angleToPlayer) * 360,
-        angle: angleToPlayer,
-        damage: 18,
-        speed: 360,
-        owner: 'enemy'
-      }));
-
-      sounds.playShoot('dual');
-      vfx.spawnMuzzleFlash(this.x - 30, this.y + 10, angleToPlayer, '#f97316');
-      vfx.spawnMuzzleFlash(this.x + 30, this.y + 10, angleToPlayer, '#f97316');
+    // Guided Missiles Volley
+    this.missileCooldown -= dt;
+    if (this.missileCooldown <= 0) {
+      this.missileCooldown = this.phase === 3 ? 2.5 : 4.0;
+      for (const side of [-35, 35]) {
+        spawnedBullets.push(new Projectile({
+          x: this.x + side,
+          y: this.y - 10,
+          vx: (side > 0 ? 1 : -1) * 80,
+          vy: 140,
+          angle: Math.PI / 2,
+          damage: 25,
+          speed: 260,
+          owner: 'enemy',
+          isMissile: true,
+          target: playerPos
+        }));
+      }
+      sounds.playShoot('missile');
     }
 
-    // Phase 2: Homing Missile Barrages
-    if (this.phase === 2) {
-      this.missileCooldown -= dt;
-      if (this.missileCooldown <= 0) {
-        this.missileCooldown = 4.0;
-        for (const side of [-1, 1]) {
+    // -------------------------------------------------------------
+    // PHASE 2 ATTACKS: Swirling Danmaku Spiral Bullet Hell
+    // -------------------------------------------------------------
+    if (this.phase >= 2) {
+      this.danmakuCooldown -= dt;
+      if (this.danmakuCooldown <= 0) {
+        this.danmakuCooldown = this.phase === 3 ? 0.35 : 0.6;
+        this.danmakuAngle += 0.32;
+
+        const bulletCount = this.phase === 3 ? 12 : 8;
+        for (let i = 0; i < bulletCount; i++) {
+          const a = this.danmakuAngle + (i * Math.PI * 2 / bulletCount);
           spawnedBullets.push(new Projectile({
-            x: this.x + side * 40,
-            y: this.y,
-            vx: side * 150,
-            vy: -80,
-            angle: -Math.PI / 2,
-            damage: 35,
-            speed: 250,
-            owner: 'enemy',
-            isMissile: true,
-            target: playerPos
+            x: this.x + Math.cos(a) * 44,
+            y: this.y + Math.sin(a) * 44,
+            vx: Math.cos(a) * 220,
+            vy: Math.sin(a) * 220,
+            angle: a,
+            damage: 18,
+            speed: 220,
+            owner: 'enemy'
           }));
         }
-        sounds.playShoot('missile');
+        sounds.playShoot('standard');
+      }
+    }
+
+    // -------------------------------------------------------------
+    // PHASE 3 ATTACKS: Sweeping Prismatic Laser Cannon
+    // -------------------------------------------------------------
+    if (this.phase === 3) {
+      this.laserCooldown -= dt;
+      if (this.laserCooldown <= 0) {
+        this.laserCooldown = 4.5;
+        // Fire sweeping laser barrage in front
+        const targetAng = Math.atan2(playerPos.y - this.y, playerPos.x - this.x);
+        for (let offset = -0.4; offset <= 0.4; offset += 0.2) {
+          const sweep = targetAng + offset;
+          spawnedBullets.push(new Projectile({
+            x: this.x,
+            y: this.y + 30,
+            vx: Math.cos(sweep) * 750,
+            vy: Math.sin(sweep) * 750,
+            angle: sweep,
+            damage: 32,
+            speed: 750,
+            owner: 'enemy',
+            isLaser: true
+          }));
+        }
+        sounds.playShoot('laser');
+        vfx.spawnFloatingText(this.x, this.y - 40, '⚡ 全域激光扫射', '#ef4444');
       }
     }
 
     return spawnedBullets;
   }
 
-  public render(ctx: CanvasRenderingContext2D) {
+  public render(ctx: CanvasRenderingContext2D): void {
     if (!this.isAlive) return;
 
     ctx.save();
     ctx.translate(this.x, this.y);
 
-    const tex = HDGraphics.getBossGoliath();
-    const drawSize = 128;
-    ctx.drawImage(tex, -drawSize / 2, -drawSize / 2, drawSize, drawSize);
+    // Hit Flash feedback
+    if (this.hitFlashTimer > 0) {
+      ctx.shadowColor = '#ffffff';
+      ctx.shadowBlur = 25;
+    }
 
-    // Glowing aura if in Phase 2
-    if (this.phase === 2) {
-      ctx.strokeStyle = `rgba(239, 68, 68, ${0.4 + Math.sin(Date.now() * 0.01) * 0.25})`;
-      ctx.lineWidth = 4;
+    // Heavy Boss Aura (changes with phase)
+    const auraColor = this.phase === 3 ? '#ef4444' : (this.phase === 2 ? '#f59e0b' : '#38bdf8');
+    ctx.strokeStyle = auraColor;
+    ctx.lineWidth = 3;
+    ctx.beginPath();
+    ctx.arc(0, 0, this.radius + 8, 0, Math.PI * 2);
+    ctx.stroke();
+
+    // Heavy Cruiser Chassis (facing down/patrol)
+    ctx.save();
+    ctx.rotate(Math.PI / 2); // default texture orientation
+    const chassisTex = HDGraphics.getEnemyChassis('heavy');
+    ctx.drawImage(chassisTex, -52, -52, 104, 104);
+    ctx.restore();
+
+    // Multiple Turrets
+    // Center Main Turret
+    ctx.save();
+    ctx.rotate(this.turretAngle + Math.PI / 2);
+    const mainTurretTex = HDGraphics.getEnemyTurret('heavy');
+    ctx.drawImage(mainTurretTex, -40, -40, 80, 80);
+    ctx.restore();
+
+    // Left & Right Sponsons (secondary turrets)
+    for (const sx of [-36, 36]) {
+      ctx.save();
+      ctx.translate(sx, 12);
+      ctx.fillStyle = '#1e293b';
       ctx.beginPath();
-      ctx.arc(0, 0, this.radius + 6, 0, Math.PI * 2);
+      ctx.arc(0, 0, 14, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.strokeStyle = '#475569';
+      ctx.stroke();
+      ctx.restore();
+    }
+
+    // Shield Forcefield Dome
+    if (this.shield > 0) {
+      ctx.strokeStyle = 'rgba(56, 189, 248, 0.7)';
+      ctx.lineWidth = 3.5;
+      ctx.beginPath();
+      ctx.arc(0, 0, this.radius + 12, 0, Math.PI * 2);
       ctx.stroke();
     }
 
     ctx.restore();
 
-    // Large boss health bar
-    this.renderHealthBar(ctx, 80, 48);
+    // Overhead Boss Health Bar
+    ctx.save();
+    ctx.font = 'bold 13px "Chakra Petch", system-ui, sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillStyle = auraColor;
+    ctx.fillText(`👑 陆上巡洋舰「歌利亚」 [PHASE ${this.phase}]`, this.x, this.y - 65);
+    this.renderHealthBar(ctx, 96, 50);
+    ctx.restore();
   }
 }

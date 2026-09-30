@@ -515,6 +515,140 @@ export class HDGraphics {
   }
 
   // -------------------------------------------------------------
+  // MODULAR ENEMY CHASSIS & TURRET (FOR INDEPENDENT ROTATION & ELITES)
+  // -------------------------------------------------------------
+  public static getEnemyChassis(enemyClass: string = 'heavy'): HTMLCanvasElement {
+    const key = `enemy_chassis_${enemyClass}`;
+    if (this.cache.has(key)) return this.cache.get(key)!;
+
+    const size = 128;
+    const { canvas, ctx } = this.createCanvas(size, size);
+
+    if (enemyClass === 'scout') {
+      this.drawTread(ctx, 22, 24, 16, 80, '#3a3a3a', '#1e1e1e');
+      this.drawTread(ctx, 90, 24, 16, 80, '#3a3a3a', '#1e1e1e');
+      const hullGrad = ctx.createLinearGradient(38, 24, 90, 104);
+      hullGrad.addColorStop(0, '#eab308');
+      hullGrad.addColorStop(0.7, '#ca8a04');
+      hullGrad.addColorStop(1, '#854d0e');
+      ctx.fillStyle = hullGrad;
+      ctx.strokeStyle = '#713f12';
+      ctx.lineWidth = 2.5;
+      ctx.beginPath();
+      ctx.moveTo(64, 22);
+      ctx.lineTo(90, 42);
+      ctx.lineTo(86, 102);
+      ctx.lineTo(42, 102);
+      ctx.lineTo(38, 42);
+      ctx.closePath();
+      ctx.fill();
+      ctx.stroke();
+    } else if (enemyClass === 'assault') {
+      this.drawTread(ctx, 16, 20, 20, 88, '#334155', '#0f172a');
+      this.drawTread(ctx, 92, 20, 20, 88, '#334155', '#0f172a');
+      const hullGrad = ctx.createLinearGradient(36, 22, 92, 106);
+      hullGrad.addColorStop(0, '#0284c7');
+      hullGrad.addColorStop(0.6, '#0369a1');
+      hullGrad.addColorStop(1, '#0c4a6e');
+      ctx.fillStyle = hullGrad;
+      ctx.strokeStyle = '#082f49';
+      ctx.lineWidth = 2.5;
+      ctx.beginPath();
+      ctx.roundRect(36, 22, 56, 84, 8);
+      ctx.fill();
+      ctx.stroke();
+    } else {
+      // Heavy / Elite / Boss chassis
+      this.drawTread(ctx, 10, 16, 26, 96, '#450a0a', '#180303');
+      this.drawTread(ctx, 92, 16, 26, 96, '#450a0a', '#180303');
+      const hullGrad = ctx.createLinearGradient(30, 18, 98, 110);
+      hullGrad.addColorStop(0, '#dc2626');
+      hullGrad.addColorStop(0.5, '#991b1b');
+      hullGrad.addColorStop(1, '#450a0a');
+      ctx.fillStyle = hullGrad;
+      ctx.strokeStyle = '#2b0707';
+      ctx.lineWidth = 3.5;
+      ctx.beginPath();
+      ctx.roundRect(30, 18, 68, 92, 10);
+      ctx.fill();
+      ctx.stroke();
+
+      // Front Ramming Blade
+      ctx.fillStyle = '#1c1917';
+      ctx.beginPath();
+      ctx.moveTo(24, 20);
+      ctx.lineTo(64, 10);
+      ctx.lineTo(104, 20);
+      ctx.lineTo(96, 28);
+      ctx.lineTo(32, 28);
+      ctx.closePath();
+      ctx.fill();
+    }
+
+    // Turret Mounting Ring
+    ctx.fillStyle = '#111827';
+    ctx.beginPath();
+    ctx.arc(64, 60, 22, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.strokeStyle = '#374151';
+    ctx.lineWidth = 2;
+    ctx.stroke();
+
+    this.cache.set(key, canvas);
+    return canvas;
+  }
+
+  public static getEnemyTurret(turretType: string = 'heavy'): HTMLCanvasElement {
+    const key = `enemy_turret_${turretType}`;
+    if (this.cache.has(key)) return this.cache.get(key)!;
+
+    const size = 128;
+    const { canvas, ctx } = this.createCanvas(size, size);
+
+    ctx.save();
+    ctx.translate(64, 64);
+
+    if (turretType === 'single') {
+      this.drawBarrel(ctx, 0, -52, 7, 44, '#475569', '#1e293b');
+      ctx.fillStyle = '#991b1b';
+      ctx.strokeStyle = '#450a0a';
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.roundRect(-16, -16, 32, 32, 6);
+      ctx.fill();
+      ctx.stroke();
+    } else {
+      // Heavy & Boss: Double heavy reinforced barrel with muzzle brake
+      this.drawBarrel(ctx, -8, -58, 8, 48, '#334155', '#0f172a', true);
+      this.drawBarrel(ctx, 8, -58, 8, 48, '#334155', '#0f172a', true);
+
+      const domeGrad = ctx.createRadialGradient(-4, -6, 4, 0, 0, 24);
+      domeGrad.addColorStop(0, '#ef4444');
+      domeGrad.addColorStop(0.6, '#b91c1c');
+      domeGrad.addColorStop(1, '#450a0a');
+
+      ctx.fillStyle = domeGrad;
+      ctx.strokeStyle = '#2b0707';
+      ctx.lineWidth = 2.5;
+      ctx.beginPath();
+      ctx.roundRect(-22, -20, 44, 42, 8);
+      ctx.fill();
+      ctx.stroke();
+    }
+
+    // Glowing Crimson Optic Sensor
+    ctx.fillStyle = '#ff2222';
+    ctx.shadowColor = '#ff4444';
+    ctx.shadowBlur = 8;
+    ctx.fillRect(-10, -12, 20, 4);
+    ctx.shadowBlur = 0;
+
+    ctx.restore();
+    this.cache.set(key, canvas);
+    return canvas;
+  }
+
+  // -------------------------------------------------------------
   // BOSS: LAND CRUISER "GOLIATH" (256x256 GIANT BATTLE PLATFORM)
   // -------------------------------------------------------------
   public static getBossGoliath(): HTMLCanvasElement {

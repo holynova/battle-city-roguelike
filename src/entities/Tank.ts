@@ -24,6 +24,7 @@ export abstract class Tank {
   public freezeTimer: number = 0;
   public burnTimer: number = 0;
   public stunTimer: number = 0;
+  public hitFlashTimer: number = 0;
   private burnTickTimer: number = 0;
 
   // Track mark generation timer
@@ -47,6 +48,9 @@ export abstract class Tank {
     if (this.stunTimer > 0) {
       this.stunTimer = Math.max(0, this.stunTimer - dt);
     }
+    if (this.hitFlashTimer > 0) {
+      this.hitFlashTimer = Math.max(0, this.hitFlashTimer - dt);
+    }
 
     if (this.burnTimer > 0) {
       this.burnTimer = Math.max(0, this.burnTimer - dt);
@@ -59,8 +63,35 @@ export abstract class Tank {
     }
   }
 
-  public takeDamage(amount: number, vfx: ParticleFX): boolean {
+  public takeDamage(amount: number, vfx: ParticleFX, knockbackAngle?: number, knockbackForce: number = 3.5): boolean {
     if (!this.isAlive || this.invulnerableTimer > 0) return false;
+
+    // Trigger visual hit flash
+    this.hitFlashTimer = 0.1;
+
+    // Directional physical knockback push
+    if (knockbackAngle !== undefined) {
+      this.x += Math.cos(knockbackAngle) * knockbackForce;
+      this.y += Math.sin(knockbackAngle) * knockbackForce;
+
+      // Spawn impact ricochet sparks
+      for (let i = 0; i < 6; i++) {
+        const sparkAng = knockbackAngle + Math.PI + (Math.random() - 0.5) * 1.2;
+        const spd = 60 + Math.random() * 120;
+        vfx.particles.push({
+          x: this.x,
+          y: this.y,
+          vx: Math.cos(sparkAng) * spd,
+          vy: Math.sin(sparkAng) * spd,
+          size: 2.5,
+          color: '#fef08a',
+          alpha: 1.0,
+          life: 0.18,
+          maxLife: 0.18,
+          shape: 'spark'
+        });
+      }
+    }
 
     let dmg = amount;
     if (this.shield > 0) {
