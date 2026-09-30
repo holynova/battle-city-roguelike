@@ -253,7 +253,7 @@ export class Engine {
     this.isBossFight = node.type === 'boss';
 
     // Reset battlefield
-    this.map.loadLevel(node.floor + 1);
+    this.map.loadLevel(node.floor, node.col, node.type);
     this.player.x = 4 * 52 + 26;
     this.player.y = 12 * 52 + 26;
     this.player.isAlive = true;
@@ -742,7 +742,8 @@ export class Engine {
         this.eagleBase,
         this.isBossFight ? 1 : Math.max(0, this.totalEnemiesToSpawn - this.enemiesSpawnedCount + this.enemies.length),
         campaignMap.currentFloor,
-        this.isBossFight
+        this.isBossFight,
+        this.map.currentThemeName
       );
     }
 

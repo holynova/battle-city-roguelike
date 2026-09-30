@@ -27,84 +27,173 @@ export class CampaignMap {
     this.generateAct(1);
   }
 
-  public generateAct(actNumber: number = 1) {
+  public generateAct(_actNumber: number = 1) {
     this.floors = [];
     this.currentFloor = 0;
     this.currentNodeId = null;
 
-    // Floor 0: Starter battles (3 branches)
-    const floor0: MapNode[] = [];
-    for (let c = 0; c < 3; c++) {
-      floor0.push({
-        id: `node_0_${c}`,
+    // Floor 0: Starter battles (3 branches with distinct terrains)
+    const floor0: MapNode[] = [
+      {
+        id: 'node_0_0',
         floor: 0,
-        col: c,
+        col: 0,
         type: 'battle',
-        nameZh: '前哨遭遇战',
-        descZh: '肃清敌方先头侦察分队',
+        nameZh: '莱茵水堑',
+        descZh: '深水横阻，攻守两座狭窄过河石桥',
         icon: '⚔️',
         nextIds: [],
         visited: false,
         available: true,
-      });
-    }
+      },
+      {
+        id: 'node_0_1',
+        floor: 0,
+        col: 1,
+        type: 'battle',
+        nameZh: '巷战迷宫',
+        descZh: '红砖错综巷道，适合拐角近距离伏击',
+        icon: '⚔️',
+        nextIds: [],
+        visited: false,
+        available: true,
+      },
+      {
+        id: 'node_0_2',
+        floor: 0,
+        col: 2,
+        type: 'battle',
+        nameZh: '十字防线',
+        descZh: '四通八达开阔街区，清理四角碉堡',
+        icon: '⚔️',
+        nextIds: [],
+        visited: false,
+        available: true,
+      }
+    ];
     this.floors.push(floor0);
 
     // Floor 1: Battles / Events
-    const floor1: MapNode[] = [];
-    const types1: NodeType[] = ['battle', 'event', 'battle'];
-    for (let c = 0; c < 3; c++) {
-      floor1.push({
-        id: `node_1_${c}`,
+    const floor1: MapNode[] = [
+      {
+        id: 'node_1_0',
         floor: 1,
-        col: c,
-        type: types1[c],
-        nameZh: types1[c] === 'event' ? '战地机密' : '阻击战',
-        descZh: types1[c] === 'event' ? '未知雷达信号与废弃战车' : '突破敌军中坦巡逻线',
-        icon: types1[c] === 'event' ? '❓' : '⚔️',
+        col: 0,
+        type: 'battle',
+        nameZh: '热带密林',
+        descZh: '大面积丛林伪装，在密林暗处猎杀敌车',
+        icon: '⚔️',
         nextIds: [],
         visited: false,
         available: false,
-      });
-    }
+      },
+      {
+        id: 'node_1_1',
+        floor: 1,
+        col: 1,
+        type: 'event',
+        nameZh: '战地机密',
+        descZh: '截获军用秘密信号与战损特种原型车',
+        icon: '❓',
+        nextIds: [],
+        visited: false,
+        available: false,
+      },
+      {
+        id: 'node_1_2',
+        floor: 1,
+        col: 2,
+        type: 'battle',
+        nameZh: '纵深战壕',
+        descZh: '双向垂直坚固战壕阵地与交叉火力',
+        icon: '⚔️',
+        nextIds: [],
+        visited: false,
+        available: false,
+      }
+    ];
     this.floors.push(floor1);
 
     // Floor 2: Elite / Shop
-    const floor2: MapNode[] = [];
-    const types2: NodeType[] = ['elite', 'shop', 'elite'];
-    for (let c = 0; c < 3; c++) {
-      floor2.push({
-        id: `node_2_${c}`,
+    const floor2: MapNode[] = [
+      {
+        id: 'node_2_0',
         floor: 2,
-        col: c,
-        type: types2[c],
-        nameZh: types2[c] === 'elite' ? '重装精英' : '黑市军械库',
-        descZh: types2[c] === 'elite' ? '遭遇敌方四星重坦王牌' : '采购战术芯片与后勤补给',
-        icon: types2[c] === 'elite' ? '💀' : '🛒',
+        col: 0,
+        type: 'elite',
+        nameZh: '列柱要塞',
+        descZh: '列柱方阵要塞，迎战敌方四星重型王牌',
+        icon: '💀',
         nextIds: [],
         visited: false,
         available: false,
-      });
-    }
+      },
+      {
+        id: 'node_2_1',
+        floor: 2,
+        col: 1,
+        type: 'shop',
+        nameZh: '黑市军械',
+        descZh: '采购战术芯片、白钢要塞加固与修护',
+        icon: '🛒',
+        nextIds: [],
+        visited: false,
+        available: false,
+      },
+      {
+        id: 'node_2_2',
+        floor: 2,
+        col: 2,
+        type: 'elite',
+        nameZh: '双子要塞',
+        descZh: '护城河环抱的双子哨所重装守军',
+        icon: '💀',
+        nextIds: [],
+        visited: false,
+        available: false,
+      }
+    ];
     this.floors.push(floor2);
 
     // Floor 3: Rest Depot / Event
-    const floor3: MapNode[] = [];
-    const types3: NodeType[] = ['rest', 'event', 'rest'];
-    for (let c = 0; c < 3; c++) {
-      floor3.push({
-        id: `node_3_${c}`,
+    const floor3: MapNode[] = [
+      {
+        id: 'node_3_0',
         floor: 3,
-        col: c,
-        type: types3[c],
-        nameZh: types3[c] === 'rest' ? '战地整备所' : '军需遗迹',
-        descZh: types3[c] === 'rest' ? '全面修复装甲与强化主炮' : '探索战损的补给军列',
-        icon: types3[c] === 'rest' ? '⛺' : '❓',
+        col: 0,
+        type: 'rest',
+        nameZh: '战地整备',
+        descZh: '全面修复装甲结构并校准强化主炮',
+        icon: '⛺',
         nextIds: [],
         visited: false,
         available: false,
-      });
-    }
+      },
+      {
+        id: 'node_3_1',
+        floor: 3,
+        col: 1,
+        type: 'event',
+        nameZh: '军需遗迹',
+        descZh: '搜刮深入战区遗弃的军需补给列车',
+        icon: '❓',
+        nextIds: [],
+        visited: false,
+        available: false,
+      },
+      {
+        id: 'node_3_2',
+        floor: 3,
+        col: 2,
+        type: 'rest',
+        nameZh: '前线工兵',
+        descZh: '紧急维修战车装甲并强化老鹰防线',
+        icon: '⛺',
+        nextIds: [],
+        visited: false,
+        available: false,
+      }
+    ];
     this.floors.push(floor3);
 
     // Floor 4: Boss Node
@@ -113,8 +202,8 @@ export class CampaignMap {
       floor: 4,
       col: 1,
       type: 'boss',
-      nameZh: actNumber === 1 ? '最终决战：陆上巡洋舰「歌利亚」' : '终极要塞核心',
-      descZh: '击溃多炮塔重装要塞巨坦',
+      nameZh: '决战歌利亚',
+      descZh: '在巨型角斗场终极决战陆上巡洋舰「歌利亚」！',
       icon: '👑',
       nextIds: [],
       visited: false,

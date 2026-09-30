@@ -550,6 +550,7 @@ export class UIOverlay {
           <div>${TacticalIcons.getMapNodeIcon(node.type, 32)}</div>
           <span class="tactical-node-label">${node.nameZh.slice(0, 4)}</span>
         `;
+        btn.title = `${node.nameZh} // ${node.descZh}`;
 
         if (node.available) {
           btn.onclick = () => {

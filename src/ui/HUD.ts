@@ -16,7 +16,8 @@ export class HUD {
     base: EagleBase,
     enemiesRemaining: number,
     currentFloor: number,
-    isBossFight: boolean = false
+    isBossFight: boolean = false,
+    themeName: string = ''
   ) {
     ctx.save();
 
@@ -85,12 +86,19 @@ export class HUD {
     ctx.textAlign = 'center';
     if (isBossFight) {
       ctx.fillStyle = '#ef4444';
-      ctx.font = 'bold 14px system-ui, sans-serif';
-      ctx.fillText('[ CRITICAL ALERT : GOLIATH LAND CRUISER ]', width / 2, 30);
+      ctx.font = 'bold 14px "Chakra Petch", system-ui, sans-serif';
+      ctx.fillText('[ ⚠ 紧急战况：陆上巡洋舰「歌利亚」 ⚠ ]', width / 2, 20);
     } else {
-      ctx.fillStyle = '#e2e8f0';
-      ctx.font = 'bold 13px system-ui, sans-serif';
-      ctx.fillText(`ENEMY SQUAD: ${enemiesRemaining} REMAINING`, width / 2, 30);
+      ctx.fillStyle = '#f8fafc';
+      ctx.font = 'bold 13px "Chakra Petch", system-ui, sans-serif';
+      ctx.fillText(`敌军剩余装甲: ${enemiesRemaining} 机`, width / 2, 20);
+    }
+
+    // Tactical Theater Theme Banner
+    if (themeName) {
+      ctx.fillStyle = '#38bdf8';
+      ctx.font = 'bold 11px "Share Tech Mono", monospace';
+      ctx.fillText(`⬡ 战区: ${themeName} ⬡`, width / 2, 38);
     }
 
     // 4. Floor Progress & Scrap Currency (Right)
