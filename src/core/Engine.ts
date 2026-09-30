@@ -1,6 +1,15 @@
 /**
  * Battle City: Rogue Bastion - Core Game Engine
- * Coordinates High-DPI rendering, physics, ECS updates, state transitions, and audio.
+ * Seamless Fullscreen Architecture, Intelligent Auto-Aim/Fire, and Elemental Arsenal:
+ * - Dynamic Viewport scaling with zero jarring division lines
+ * - Auto-Aim with nearest enemy detection, smooth turret slerp, and auto-fire
+ * - Real elemental combat mechanics:
+ *   * Light: Piercing laser beam with prism refraction
+ *   * Electricity: Tesla ball lightning with radial arcing EMP stun
+ *   * Wind: Gale vortex singularity with enemy suction and bullet deflection
+ *   * Fire: Napalm mortar with persistent burning ground fire zones
+ *   * Ice: Cryo frost nova with wide sub-zero freezing and brittle shatter
+ *   * Heavy AP: Ballistic artillery with kinetic bouncing
  */
 
 import { TileMap } from '../map/TileMap';
@@ -27,10 +36,11 @@ export class Engine {
   private dpr: number = 1;
 
   // Viewport and Arena Dimensions
-  private width: number = 960;
-  private height: number = 740;
+  private width: number = window.innerWidth;
+  private height: number = window.innerHeight;
   private arenaX: number = 0;
   private arenaY: number = 0;
+  private arenaScale: number = 1;
   private readonly arenaSize: number = 676; // 13 * 52px
 
   // State
@@ -43,6 +53,11 @@ export class Engine {
   public powerUps: PowerUp[] = [];
   public vfx: ParticleFX;
   public ui: UIOverlay;
+
+  // Auto-Aim & Auto-Fire Settings
+  public autoAim: boolean = true;
+  public autoFire: boolean = true;
+  public currentTarget: (EnemyTank | BossTank) | null = null;
 
   // Wave Director
   private isBossFight: boolean = false;
@@ -94,19 +109,42 @@ export class Engine {
   private setupHighDPI() {
     this.dpr = window.devicePixelRatio || 1;
     const resize = () => {
-      this.width = Math.min(window.innerWidth, 1024);
-      this.height = Math.min(window.innerHeight, 780);
+      this.width = window.innerWidth;
+      this.height = window.innerHeight;
       this.canvas.width = this.width * this.dpr;
       this.canvas.height = this.height * this.dpr;
       this.canvas.style.width = `${this.width}px`;
       this.canvas.style.height = `${this.height}px`;
 
-      // Center the 676x676 arena in the window
-      this.arenaX = Math.floor((this.width - this.arenaSize) / 2);
-      this.arenaY = Math.floor((this.height - this.arenaSize) / 2) + 10;
+      // Scale 676x676 arena dynamically to fill viewport comfortably
+      this.arenaScale = Math.min((this.height - 84) / this.arenaSize, (this.width - 40) / this.arenaSize);
+      this.arenaX = Math.floor((this.width - this.arenaSize * this.arenaScale) / 2);
+      this.arenaY = Math.floor((this.height - this.arenaSize * this.arenaScale) / 2) + 14;
     };
     resize();
     window.addEventListener('resize', resize);
+  }
+
+  public toggleAutoAim() {
+    this.autoAim = !this.autoAim;
+    this.autoFire = this.autoAim;
+    sounds.playUiClick();
+    this.vfx.spawnFloatingText(
+      this.player.x,
+      this.player.y - 30,
+      this.autoAim ? '🎯 自动开火瞄准: 开' : '🎯 自动开火瞄准: 关',
+      this.autoAim ? '#22c55e' : '#94a3b8'
+    );
+    const btn = document.getElementById('auto-aim-btn');
+    if (btn) {
+      if (this.autoAim) {
+        btn.classList.add('active');
+        btn.textContent = '🎯 自动瞄准: 开 (T)';
+      } else {
+        btn.classList.remove('active');
+        btn.textContent = '🎯 自动瞄准: 关 (T)';
+      }
+    }
   }
 
   private setupInputs() {
@@ -123,6 +161,19 @@ export class Engine {
       if (k === 's' || k === 'arrowdown') this.player.moveY = 1;
       if (k === 'a' || k === 'arrowleft') this.player.moveX = -1;
       if (k === 'd' || k === 'arrowright') this.player.moveX = 1;
+
+      // Weapon switching hotkeys 1-6
+      if (k === '1') this.player.setWeapon('standard');
+      if (k === '2') this.player.setWeapon('laser');
+      if (k === '3') this.player.setWeapon('tesla');
+      if (k === '4') this.player.setWeapon('vortex');
+      if (k === '5') this.player.setWeapon('napalm');
+      if (k === '6') this.player.setWeapon('cryo');
+
+      // Auto-aim toggle hotkey 't'
+      if (k === 't') {
+        this.toggleAutoAim();
+      }
 
       if (e.code === 'Space') {
         e.preventDefault();
@@ -141,6 +192,19 @@ export class Engine {
       if ((k === 'd' || k === 'arrowright') && this.player.moveX > 0) this.player.moveX = 0;
     });
 
+    // Mouse wheel cycles weapon
+    window.addEventListener('wheel', (e) => {
+      if (this.state === 'PLAYING') {
+        this.player.cycleWeapon(e.deltaY > 0 ? 1 : -1);
+      }
+    });
+
+    // Floating auto-aim button
+    const autoAimBtn = document.getElementById('auto-aim-btn');
+    if (autoAimBtn) {
+      autoAimBtn.addEventListener('click', () => this.toggleAutoAim());
+    }
+
     // Mouse Tracking
     const updateMousePos = (e: MouseEvent) => {
       const rect = this.canvas.getBoundingClientRect();
@@ -148,14 +212,22 @@ export class Engine {
       this.mouseCanvasY = e.clientY - rect.top;
 
       // Convert to arena coordinates
-      this.player.aimX = this.mouseCanvasX - this.arenaX;
-      this.player.aimY = this.mouseCanvasY - this.arenaY;
+      this.player.aimX = (this.mouseCanvasX - this.arenaX) / this.arenaScale;
+      this.player.aimY = (this.mouseCanvasY - this.arenaY) / this.arenaScale;
     };
 
     this.canvas.addEventListener('mousemove', updateMousePos);
 
     this.canvas.addEventListener('mousedown', (e) => {
       if (this.state !== 'PLAYING') return;
+
+      // Check if clicking on bottom weapon dock first
+      const clickedWeapon = HUD.getWeaponSlotAt(this.width, this.height, this.mouseCanvasX, this.mouseCanvasY);
+      if (clickedWeapon) {
+        this.player.setWeapon(clickedWeapon);
+        return;
+      }
+
       if (e.button === 0) {
         this.isMouseDown = true;
         this.triggerPlayerFire();
@@ -340,9 +412,108 @@ export class Engine {
       this.animFrameIndex++;
     }
 
-    // Auto-fire while mouse held down
-    if (this.isMouseDown) {
+    // -------------------------------------------------------------
+    // Auto-Aim & Target Scanning
+    // -------------------------------------------------------------
+    if (this.autoAim) {
+      let closest: (EnemyTank | BossTank) | null = null;
+      let minDist = Infinity;
+      for (const e of this.enemies) {
+        if (e.isAlive) {
+          const d = Math.hypot(e.x - this.player.x, e.y - this.player.y);
+          if (d < minDist) {
+            minDist = d;
+            closest = e;
+          }
+        }
+      }
+      this.currentTarget = closest;
+      if (closest) {
+        const targetAngle = Math.atan2(closest.y - this.player.y, closest.x - this.player.x);
+        let diff = targetAngle - this.player.turretAngle;
+        while (diff > Math.PI) diff -= Math.PI * 2;
+        while (diff < -Math.PI) diff += Math.PI * 2;
+        this.player.turretAngle += diff * Math.min(1.0, dt * 26);
+        this.player.aimX = closest.x;
+        this.player.aimY = closest.y;
+
+        // Auto-fire if in range
+        if (this.autoFire && this.player.fireCooldown <= 0 && minDist < 620) {
+          this.triggerPlayerFire();
+        }
+      } else {
+        // No enemies alive: smoothly follow chassis
+        let diff = this.player.chassisAngle - this.player.turretAngle;
+        while (diff > Math.PI) diff -= Math.PI * 2;
+        while (diff < -Math.PI) diff += Math.PI * 2;
+        this.player.turretAngle += diff * Math.min(1.0, dt * 10);
+      }
+    } else if (this.isMouseDown) {
+      // Manual hold-fire
       this.triggerPlayerFire();
+    }
+
+    // -------------------------------------------------------------
+    // Gale Vortex Singularity Physics
+    // -------------------------------------------------------------
+    for (let i = this.vfx.vortexes.length - 1; i >= 0; i--) {
+      const v = this.vfx.vortexes[i];
+      // Pull enemies towards vortex singularity
+      for (const e of this.enemies) {
+        if (e.isAlive) {
+          const dist = Math.hypot(e.x - v.x, e.y - v.y);
+          if (dist < v.radius && dist > 15) {
+            const pull = (1 - dist / v.radius) * 190 * dt;
+            e.x += ((v.x - e.x) / dist) * pull;
+            e.y += ((v.y - e.y) / dist) * pull;
+          }
+        }
+      }
+      // Deflect / swallow enemy projectiles inside vortex
+      for (const b of this.projectiles) {
+        if (b.owner === 'enemy' && b.isAlive) {
+          const dist = Math.hypot(b.x - v.x, b.y - v.y);
+          if (dist < v.radius * 0.75) {
+            b.isAlive = false;
+            this.vfx.spawnMuzzleFlash(b.x, b.y, b.angle, '#10b981');
+          }
+        }
+      }
+      // Singularity implosion at expiration
+      if (v.life <= dt) {
+        for (const e of this.enemies) {
+          if (e.isAlive) {
+            const dist = Math.hypot(e.x - v.x, e.y - v.y);
+            if (dist < v.radius) {
+              e.takeDamage(45, this.vfx);
+              e.applyStun(1.0);
+              const push = (1 - dist / v.radius) * 60;
+              e.x += ((e.x - v.x) / (dist || 1)) * push;
+              e.y += ((e.y - v.y) / (dist || 1)) * push;
+            }
+          }
+        }
+        this.vfx.spawnExplosion(v.x, v.y, true);
+        sounds.playExplosion(true);
+      }
+    }
+
+    // -------------------------------------------------------------
+    // Ground Fire Pool Damage Ticks
+    // -------------------------------------------------------------
+    for (const fp of this.vfx.firePools) {
+      if (fp.tickTimer >= 0.28) {
+        fp.tickTimer = 0;
+        for (const e of this.enemies) {
+          if (e.isAlive) {
+            const dist = Math.hypot(e.x - fp.x, e.y - fp.y);
+            if (dist < fp.radius) {
+              e.takeDamage(12, this.vfx);
+              e.applyBurn(3.0);
+            }
+          }
+        }
+      }
     }
 
     // Update Map
@@ -471,20 +642,94 @@ export class Engine {
       }
     }
 
+    // -------------------------------------------------------------
     // Update Projectiles and Collisions
+    // -------------------------------------------------------------
     for (let i = this.projectiles.length - 1; i >= 0; i--) {
       const b = this.projectiles[i];
       b.update(dt);
 
       if (!b.isAlive) {
+        // Trigger detonation on timeout for certain weapons
+        if (b.isVortex && b.owner === 'player') {
+          this.vfx.addVortex(b.x, b.y, 180, 3.5);
+          sounds.playVortex();
+        } else if (b.isNapalm && b.owner === 'player') {
+          this.vfx.addFirePool(b.x, b.y, 85, 4.5);
+          this.vfx.spawnExplosion(b.x, b.y, false);
+        }
         this.projectiles.splice(i, 1);
         continue;
+      }
+
+      // Tesla Periodic Discharge to nearby enemies during flight
+      if (b.isTesla && b.owner === 'player') {
+        b.dischargeTimer += dt;
+        if (b.dischargeTimer >= 0.12) {
+          b.dischargeTimer = 0;
+          for (const e of this.enemies) {
+            if (e.isAlive) {
+              const d = Math.hypot(e.x - b.x, e.y - b.y);
+              if (d < 150) {
+                e.takeDamage(10, this.vfx);
+                e.applyStun(0.7);
+                this.vfx.addLightningArc(b.x, b.y, e.x, e.y, '#38bdf8');
+                sounds.playTeslaArc();
+              }
+            }
+          }
+        }
       }
 
       // 1. Tile Map Collision (Bricks, Steel)
       const hitResult = this.map.hitTile(b.x, b.y, b.angle, b.canBreakSteel, this.vfx);
       if (hitResult.hit) {
-        if (hitResult.ricochet && b.bouncesLeft > 0) {
+        if (b.isLaser) {
+          // Laser Prism Refraction upon hitting Steel Wall
+          if (hitResult.ricochet && !b.isRefracted) {
+            for (const offset of [-0.75, 0.75]) {
+              const refAngle = b.angle + offset;
+              this.projectiles.push(new Projectile({
+                x: b.x,
+                y: b.y,
+                vx: Math.cos(refAngle) * 800,
+                vy: Math.sin(refAngle) * 800,
+                angle: refAngle,
+                damage: b.damage * 0.75,
+                speed: 800,
+                owner: 'player',
+                isLaser: true,
+                isRefracted: true,
+                canBreakSteel: b.canBreakSteel
+              }));
+            }
+            this.vfx.spawnPrismRefraction(b.x, b.y, b.angle);
+            sounds.playShoot('laser');
+          }
+          this.projectiles.splice(i, 1);
+          continue;
+        } else if (b.isVortex) {
+          this.vfx.addVortex(b.x, b.y, 180, 3.5);
+          sounds.playVortex();
+          this.projectiles.splice(i, 1);
+          continue;
+        } else if (b.isNapalm) {
+          this.vfx.addFirePool(b.x, b.y, 85, 4.5);
+          this.vfx.spawnExplosion(b.x, b.y, false);
+          this.projectiles.splice(i, 1);
+          continue;
+        } else if (b.isCryo) {
+          this.vfx.spawnFrostNovaExplosion(b.x, b.y, 130);
+          sounds.playFreeze();
+          for (const e of this.enemies) {
+            if (e.isAlive && Math.hypot(e.x - b.x, e.y - b.y) < 130) {
+              e.takeDamage(b.damage, this.vfx);
+              e.applyFreeze(2.8);
+            }
+          }
+          this.projectiles.splice(i, 1);
+          continue;
+        } else if (hitResult.ricochet && b.bouncesLeft > 0) {
           b.bounce(b.angle + Math.PI);
         } else {
           this.projectiles.splice(i, 1);
@@ -517,30 +762,79 @@ export class Engine {
 
       // 4. Enemy Collision
       if (b.owner === 'player' || b.owner === 'base') {
-        let hitEnemy = false;
+        let removeBullet = false;
         for (const e of this.enemies) {
           const distToEnemy = Math.hypot(b.x - e.x, b.y - e.y);
           if (distToEnemy < e.radius + b.radius) {
-            e.takeDamage(b.damage, this.vfx);
+            if (b.isLaser) {
+              if (!b.hitTargets.has(e)) {
+                b.hitTargets.add(e);
+                e.takeDamage(b.damage, this.vfx);
+                sounds.playExplosion(false);
+                // Prism refraction on Boss
+                if (e instanceof BossTank && !b.isRefracted) {
+                  for (const offset of [-0.75, 0.75]) {
+                    const refAngle = b.angle + offset;
+                    this.projectiles.push(new Projectile({
+                      x: b.x,
+                      y: b.y,
+                      vx: Math.cos(refAngle) * 800,
+                      vy: Math.sin(refAngle) * 800,
+                      angle: refAngle,
+                      damage: b.damage * 0.75,
+                      speed: 800,
+                      owner: 'player',
+                      isLaser: true,
+                      isRefracted: true
+                    }));
+                  }
+                  this.vfx.spawnPrismRefraction(b.x, b.y, b.angle);
+                }
+              }
+              // Laser pierces through, do not remove bullet
+              continue;
+            }
 
-            // Apply elemental statuses
-            if (b.isCryo) e.applyFreeze(2.5);
-            if (b.isIncendiary) e.applyBurn(4.0);
+            if (b.isCryo) {
+              this.vfx.spawnFrostNovaExplosion(b.x, b.y, 130);
+              sounds.playFreeze();
+              for (const target of this.enemies) {
+                if (target.isAlive && Math.hypot(target.x - b.x, target.y - b.y) < 130) {
+                  target.takeDamage(b.damage, this.vfx);
+                  target.applyFreeze(2.8);
+                }
+              }
+              removeBullet = true;
+              break;
+            }
+
+            if (b.isVortex) {
+              this.vfx.addVortex(b.x, b.y, 180, 3.5);
+              sounds.playVortex();
+              removeBullet = true;
+              break;
+            }
+
+            if (b.isNapalm) {
+              this.vfx.addFirePool(b.x, b.y, 85, 4.5);
+              this.vfx.spawnExplosion(b.x, b.y, false);
+              removeBullet = true;
+              break;
+            }
+
+            // Standard / Tesla Hit
+            e.takeDamage(b.damage, this.vfx);
             if (b.isTesla) {
               e.applyStun(1.0);
-              // Jump arc to nearest second enemy
               this.chainLightning(e);
             }
-
             sounds.playExplosion(false);
-
-            if (!b.isLaser) {
-              hitEnemy = true;
-            }
+            removeBullet = true;
             break;
           }
         }
-        if (hitEnemy) {
+
+        if (removeBullet) {
           this.projectiles.splice(i, 1);
           continue;
         }
@@ -551,7 +845,7 @@ export class Engine {
     this.vfx.update(dt);
   }
 
-  // Spawn an individual enemy tank based on current node difficulty
+  // Spawn an individual enemy tank
   private spawnOneEnemy() {
     this.enemiesSpawnedCount++;
     const sp = this.spawnPoints[Math.floor(Math.random() * this.spawnPoints.length)];
@@ -563,7 +857,7 @@ export class Engine {
     else if (rand < 0.85) cls = 'heavy';
     else cls = 'missile';
 
-    const isBonus = Math.random() < 0.35; // 35% chance to be classic flashing bonus tank
+    const isBonus = Math.random() < 0.35;
     const tank = new EnemyTank(sp.x, sp.y, cls, isBonus);
     this.enemies.push(tank);
     this.vfx.spawnExplosion(sp.x, sp.y, false);
@@ -577,7 +871,9 @@ export class Engine {
         if (d < 160) {
           e.takeDamage(20, this.vfx);
           e.applyStun(0.8);
+          this.vfx.addLightningArc(source.x, source.y, e.x, e.y, '#38bdf8');
           this.vfx.spawnFloatingText(e.x, e.y - 20, 'TESLA CHAIN!', '#38bdf8');
+          sounds.playTeslaArc();
           break;
         }
       }
@@ -597,13 +893,11 @@ export class Engine {
         playerInventory.starsCollected = Math.min(3, playerInventory.starsCollected + 1);
         break;
       case 'clock':
-        // Freeze all enemies for 8 seconds
         for (const e of this.enemies) {
           e.applyFreeze(8.0);
         }
         break;
       case 'bomb':
-        // Wipe regular enemies
         for (const e of this.enemies) {
           if (!(e instanceof BossTank)) {
             e.takeDamage(999, this.vfx);
@@ -629,27 +923,76 @@ export class Engine {
     }
   }
 
+  // Render holographic lock-on reticle over locked target
+  private renderLockOnReticle(ctx: CanvasRenderingContext2D, target: Tank) {
+    ctx.save();
+    ctx.translate(target.x, target.y);
+    const r = target.radius + 14;
+    const time = performance.now() * 0.003;
+
+    // Outer rotating holographic brackets
+    ctx.save();
+    ctx.rotate(time);
+    ctx.strokeStyle = '#22c55e';
+    ctx.lineWidth = 2;
+    ctx.shadowColor = '#22c55e';
+    ctx.shadowBlur = 10;
+
+    const bLen = 10;
+    // 4 Corner Brackets
+    for (let i = 0; i < 4; i++) {
+      ctx.rotate(Math.PI / 2);
+      ctx.beginPath();
+      ctx.moveTo(r - bLen, -r);
+      ctx.lineTo(r, -r);
+      ctx.lineTo(r, -r + bLen);
+      ctx.stroke();
+    }
+    ctx.restore();
+
+    // Center Pulsing Lock Diamond
+    const pulse = 1 + Math.sin(time * 6) * 0.15;
+    ctx.strokeStyle = '#ef4444';
+    ctx.lineWidth = 1.5;
+    ctx.beginPath();
+    ctx.moveTo(0, -6 * pulse);
+    ctx.lineTo(6 * pulse, 0);
+    ctx.lineTo(0, 6 * pulse);
+    ctx.lineTo(-6 * pulse, 0);
+    ctx.closePath();
+    ctx.stroke();
+
+    // Lock text & distance
+    ctx.font = 'bold 9px "Share Tech Mono", monospace';
+    ctx.fillStyle = '#22c55e';
+    ctx.textAlign = 'center';
+    const dist = Math.round(Math.hypot(target.x - this.player.x, target.y - this.player.y));
+    ctx.fillText(`[ 🎯 LOCK ${dist}m ]`, 0, r + 14);
+
+    ctx.restore();
+  }
+
   // -------------------------------------------------------------
-  // RENDER PIPELINE (Retina / High-DPI Scaled)
+  // RENDER PIPELINE (Seamless Fullscreen & Retina Scaled)
   // -------------------------------------------------------------
   private render() {
     this.ctx.save();
     this.ctx.scale(this.dpr, this.dpr);
 
-    // Deep Dark Sci-Fi Command Background
-    this.ctx.fillStyle = '#090d16';
+    // Deep Dark Seamless Battlefield Background
+    this.ctx.fillStyle = '#060910';
     this.ctx.fillRect(0, 0, this.width, this.height);
 
     // Subtle tactical grid lines in surrounding space
-    this.ctx.strokeStyle = 'rgba(30, 41, 59, 0.4)';
+    this.ctx.strokeStyle = 'rgba(30, 41, 59, 0.25)';
     this.ctx.lineWidth = 1;
-    for (let x = 0; x < this.width; x += 40) {
+    for (let x = 0; x < this.width; x += 48) {
       this.ctx.beginPath();
       this.ctx.moveTo(x, 0);
       this.ctx.lineTo(x, this.height);
       this.ctx.stroke();
     }
-    for (let y = 0; y < this.height; y += 40) {
+    for (let y = 0; y < this.height; y += 48) {
       this.ctx.beginPath();
       this.ctx.moveTo(0, y);
       this.ctx.lineTo(this.width, y);
@@ -665,21 +1008,29 @@ export class Engine {
     }
 
     // -------------------------------------------------------------
-    // RENDER 676x676 ARENA BATTLEFIELD
+    // RENDER ARENA BATTLEFIELD (Dynamically Scaled & Centered)
     // -------------------------------------------------------------
     this.ctx.save();
     this.ctx.translate(this.arenaX + shakeX, this.arenaY + shakeY);
+    this.ctx.scale(this.arenaScale, this.arenaScale);
 
     // Arena Floor Bed
-    this.ctx.fillStyle = '#111827';
+    this.ctx.fillStyle = '#0f172a';
     this.ctx.fillRect(0, 0, this.arenaSize, this.arenaSize);
 
-    // High-Tech Outer Metallic Border Frame
-    this.ctx.strokeStyle = '#38bdf8';
-    this.ctx.lineWidth = 3;
-    this.ctx.strokeRect(-2, -2, this.arenaSize + 4, this.arenaSize + 4);
+    // Subtle ambient glow border (no harsh dividing lines)
+    ctxSoftGlow: {
+      const grad = this.ctx.createRadialGradient(
+        this.arenaSize / 2, this.arenaSize / 2, this.arenaSize * 0.4,
+        this.arenaSize / 2, this.arenaSize / 2, this.arenaSize * 0.72
+      );
+      grad.addColorStop(0, 'rgba(0, 0, 0, 0)');
+      grad.addColorStop(1, 'rgba(0, 0, 0, 0.45)');
+      this.ctx.fillStyle = grad;
+      this.ctx.fillRect(0, 0, this.arenaSize, this.arenaSize);
+    }
 
-    // 1. Persistent Ground Decals (Tread marks)
+    // 1. Persistent Ground Decals (Tread marks, fire pools, vortexes)
     this.vfx.renderGroundDecals(this.ctx);
 
     // 2. Tilemap Base Layer (Bricks, Steel, Water, Ice)
@@ -701,6 +1052,11 @@ export class Engine {
     // 6. Player Tank
     this.player.render(this.ctx);
 
+    // 6.5 Render Lock-On Holographic Reticle if enemy targeted
+    if (this.autoAim && this.currentTarget && this.currentTarget.isAlive) {
+      this.renderLockOnReticle(this.ctx, this.currentTarget);
+    }
+
     // 7. Projectiles
     for (const b of this.projectiles) {
       b.render(this.ctx);
@@ -710,7 +1066,7 @@ export class Engine {
     this.ctx.save();
     this.ctx.globalCompositeOperation = 'lighter';
     for (const b of this.projectiles) {
-      const glowR = b.isLaser ? 36 : (b.isMortar ? 28 : 18);
+      const glowR = b.isLaser ? 36 : (b.isMortar ? 28 : (b.isTesla ? 32 : 18));
       const grad = this.ctx.createRadialGradient(b.x, b.y, 1, b.x, b.y, glowR);
       const glowColor = b.owner === 'player' ? 'rgba(56, 189, 248, 0.25)' : 'rgba(239, 68, 68, 0.22)';
       grad.addColorStop(0, glowColor);
@@ -725,13 +1081,13 @@ export class Engine {
     // 8. Top Tile Layer (Forests that hide tanks underneath!)
     this.map.renderTopLayer(this.ctx);
 
-    // 9. Particle VFX & Floating Combat Texts
+    // 9. Particle VFX, Lightning Arcs & Floating Combat Texts
     this.vfx.renderVFX(this.ctx);
 
     this.ctx.restore();
 
     // -------------------------------------------------------------
-    // RENDER TOP HUD & BOTTOM METERS
+    // RENDER FLOATING COMBAT HUD & WEAPON SELECTOR DOCK
     // -------------------------------------------------------------
     if (this.state === 'PLAYING') {
       HUD.render(
@@ -746,7 +1102,8 @@ export class Engine {
         this.isBossFight ? 1 : Math.max(0, this.totalEnemiesToSpawn - this.enemiesSpawnedCount + this.enemies.length),
         campaignMap.currentFloor,
         this.isBossFight,
-        this.map.currentThemeName
+        this.map.currentThemeName,
+        this.autoAim
       );
     }
 

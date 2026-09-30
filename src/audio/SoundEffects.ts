@@ -18,8 +18,8 @@ class SoundEffects {
     }
   }
 
-  // Heavy tank cannon blast
-  public playShoot(type: 'standard' | 'dual' | 'heavy' | 'laser' | 'missile' = 'standard') {
+  // Tank cannon & elemental weapon blasts
+  public playShoot(type: 'standard' | 'dual' | 'heavy' | 'laser' | 'missile' | 'tesla' | 'vortex' | 'napalm' | 'cryo' = 'standard') {
     if (!this.enabled) return;
     this.initContext();
     if (!this.ctx) return;
@@ -33,14 +33,80 @@ class SoundEffects {
       const osc = this.ctx.createOscillator();
       const gain = this.ctx.createGain();
       osc.type = 'sawtooth';
-      osc.frequency.setValueAtTime(1200, t);
-      osc.frequency.exponentialRampToValueAtTime(160, t + 0.18);
+      osc.frequency.setValueAtTime(1400, t);
+      osc.frequency.exponentialRampToValueAtTime(180, t + 0.16);
+      gain.gain.setValueAtTime(0.45, t);
+      gain.gain.exponentialRampToValueAtTime(0.01, t + 0.16);
+      osc.connect(gain);
+      gain.connect(master);
+      osc.start(t);
+      osc.stop(t + 0.16);
+      return;
+    }
+
+    if (type === 'tesla') {
+      // Crackling high-voltage pulse
+      const osc = this.ctx.createOscillator();
+      const gain = this.ctx.createGain();
+      osc.type = 'square';
+      osc.frequency.setValueAtTime(440, t);
+      osc.frequency.setValueAtTime(880, t + 0.04);
+      osc.frequency.setValueAtTime(220, t + 0.08);
+      osc.frequency.exponentialRampToValueAtTime(60, t + 0.22);
+      gain.gain.setValueAtTime(0.35, t);
+      gain.gain.exponentialRampToValueAtTime(0.01, t + 0.22);
+      osc.connect(gain);
+      gain.connect(master);
+      osc.start(t);
+      osc.stop(t + 0.22);
+      return;
+    }
+
+    if (type === 'vortex') {
+      // Swirling low-pass wind gust
+      const osc = this.ctx.createOscillator();
+      const gain = this.ctx.createGain();
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(320, t);
+      osc.frequency.linearRampToValueAtTime(120, t + 0.26);
+      gain.gain.setValueAtTime(0.5, t);
+      gain.gain.exponentialRampToValueAtTime(0.01, t + 0.26);
+      osc.connect(gain);
+      gain.connect(master);
+      osc.start(t);
+      osc.stop(t + 0.26);
+      return;
+    }
+
+    if (type === 'cryo') {
+      // High-pitched crystal ping
+      const osc = this.ctx.createOscillator();
+      const gain = this.ctx.createGain();
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(1100, t);
+      osc.frequency.exponentialRampToValueAtTime(450, t + 0.18);
       gain.gain.setValueAtTime(0.4, t);
       gain.gain.exponentialRampToValueAtTime(0.01, t + 0.18);
       osc.connect(gain);
       gain.connect(master);
       osc.start(t);
       osc.stop(t + 0.18);
+      return;
+    }
+
+    if (type === 'napalm') {
+      // Deep mortar thud
+      const osc = this.ctx.createOscillator();
+      const gain = this.ctx.createGain();
+      osc.type = 'triangle';
+      osc.frequency.setValueAtTime(130, t);
+      osc.frequency.exponentialRampToValueAtTime(35, t + 0.3);
+      gain.gain.setValueAtTime(0.7, t);
+      gain.gain.exponentialRampToValueAtTime(0.01, t + 0.3);
+      osc.connect(gain);
+      gain.connect(master);
+      osc.start(t);
+      osc.stop(t + 0.3);
       return;
     }
 
@@ -394,6 +460,95 @@ class SoundEffects {
     gain.connect(this.ctx.destination);
     osc.start(t);
     osc.stop(t + 0.18);
+  }
+
+  // Tesla High-Voltage Arc Discharge
+  public playTeslaArc() {
+    if (!this.enabled) return;
+    this.initContext();
+    if (!this.ctx) return;
+
+    const t = this.ctx.currentTime;
+    const osc = this.ctx.createOscillator();
+    const gain = this.ctx.createGain();
+    osc.type = 'sawtooth';
+    osc.frequency.setValueAtTime(650, t);
+    osc.frequency.setValueAtTime(1200, t + 0.03);
+    osc.frequency.setValueAtTime(320, t + 0.06);
+
+    gain.gain.setValueAtTime(this.volume * 0.35, t);
+    gain.gain.exponentialRampToValueAtTime(0.01, t + 0.12);
+
+    osc.connect(gain);
+    gain.connect(this.ctx.destination);
+    osc.start(t);
+    osc.stop(t + 0.12);
+  }
+
+  // Cryo Deep Freeze crystallization sound
+  public playFreeze() {
+    if (!this.enabled) return;
+    this.initContext();
+    if (!this.ctx) return;
+
+    const t = this.ctx.currentTime;
+    const osc = this.ctx.createOscillator();
+    const gain = this.ctx.createGain();
+    osc.type = 'sine';
+    osc.frequency.setValueAtTime(1400, t);
+    osc.frequency.linearRampToValueAtTime(800, t + 0.2);
+
+    gain.gain.setValueAtTime(this.volume * 0.4, t);
+    gain.gain.exponentialRampToValueAtTime(0.01, t + 0.2);
+
+    osc.connect(gain);
+    gain.connect(this.ctx.destination);
+    osc.start(t);
+    osc.stop(t + 0.2);
+  }
+
+  // Ice Brittle Shatter burst
+  public playShatter() {
+    if (!this.enabled) return;
+    this.initContext();
+    if (!this.ctx) return;
+
+    const t = this.ctx.currentTime;
+    const osc = this.ctx.createOscillator();
+    const gain = this.ctx.createGain();
+    osc.type = 'triangle';
+    osc.frequency.setValueAtTime(1800, t);
+    osc.frequency.exponentialRampToValueAtTime(300, t + 0.15);
+
+    gain.gain.setValueAtTime(this.volume * 0.5, t);
+    gain.gain.exponentialRampToValueAtTime(0.01, t + 0.15);
+
+    osc.connect(gain);
+    gain.connect(this.ctx.destination);
+    osc.start(t);
+    osc.stop(t + 0.15);
+  }
+
+  // Gale Vortex Singularity hum
+  public playVortex() {
+    if (!this.enabled) return;
+    this.initContext();
+    if (!this.ctx) return;
+
+    const t = this.ctx.currentTime;
+    const osc = this.ctx.createOscillator();
+    const gain = this.ctx.createGain();
+    osc.type = 'sine';
+    osc.frequency.setValueAtTime(80, t);
+    osc.frequency.linearRampToValueAtTime(260, t + 0.35);
+
+    gain.gain.setValueAtTime(this.volume * 0.4, t);
+    gain.gain.exponentialRampToValueAtTime(0.01, t + 0.35);
+
+    osc.connect(gain);
+    gain.connect(this.ctx.destination);
+    osc.start(t);
+    osc.stop(t + 0.35);
   }
 }
 

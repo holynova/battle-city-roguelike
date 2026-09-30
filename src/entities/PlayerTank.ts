@@ -11,12 +11,78 @@ import { HDGraphics } from '../graphics/HDGraphics';
 import { sounds } from '../audio/SoundEffects';
 import { playerInventory } from '../roguelite/Inventory';
 
+export type WeaponType = 'standard' | 'laser' | 'tesla' | 'vortex' | 'napalm' | 'cryo';
+
+export interface WeaponInfo {
+  type: WeaponType;
+  nameZh: string;
+  nameEn: string;
+  icon: string;
+  color: string;
+  desc: string;
+}
+
+export const WEAPON_REGISTRY: Record<WeaponType, WeaponInfo> = {
+  standard: {
+    type: 'standard',
+    nameZh: '重装穿甲双炮',
+    nameEn: 'Twin AP Cannon',
+    icon: '⚔️',
+    color: '#facc15',
+    desc: '高膛压穿甲弹，击穿砖墙，钢壁跳弹'
+  },
+  laser: {
+    type: 'laser',
+    nameZh: '高能棱镜光束',
+    nameEn: 'Prism Laser',
+    icon: '💫',
+    color: '#00f0ff',
+    desc: '强贯穿激光，击中钢壁与Boss发生棱镜折射'
+  },
+  tesla: {
+    type: 'tesla',
+    nameZh: '球状闪电电弧',
+    nameEn: 'Tesla Plasma',
+    icon: '⚡',
+    color: '#38bdf8',
+    desc: '缓慢电浆球，沿途周期释放电弧瘫痪EMP敌机'
+  },
+  vortex: {
+    type: 'vortex',
+    nameZh: '烈风引力涡流',
+    nameEn: 'Gale Singularity',
+    icon: '🌀',
+    color: '#10b981',
+    desc: '聚能风暴弹，引爆后强力聚怪吸扯并偏折敌弹'
+  },
+  napalm: {
+    type: 'napalm',
+    nameZh: '凝固汽油迫击炮',
+    nameEn: 'Napalm Mortar',
+    icon: '🔥',
+    color: '#f97316',
+    desc: '高抛曲射，着弹点残留持续烈焰火海破甲'
+  },
+  cryo: {
+    type: 'cryo',
+    nameZh: '急冻极寒霜爆',
+    nameEn: 'Cryo Frost Nova',
+    icon: '❄️',
+    color: '#93c5fd',
+    desc: ' sub-zero 冻结弹，大范围绝对冻结敌坦并脆化'
+  }
+};
+
 export class PlayerTank extends Tank {
   // Input states
   public moveX: number = 0;
   public moveY: number = 0;
   public aimX: number = 0;
   public aimY: number = 0;
+
+  // Active Weapon Selection
+  public currentWeapon: WeaponType = 'standard';
+  public unlockedWeapons: WeaponType[] = ['standard', 'laser', 'tesla', 'vortex', 'napalm', 'cryo'];
 
   // Aiming mode: 'mouse' (twin-stick) or 'classic' (fixed to heading)
   public aimMode: 'mouse' | 'classic' = 'mouse';
@@ -191,25 +257,35 @@ export class PlayerTank extends Tank {
     return true;
   }
 
+  // Switch active weapon
+  public setWeapon(type: WeaponType) {
+    if (this.unlockedWeapons.includes(type)) {
+      this.currentWeapon = type;
+      sounds.playModuleEquip();
+    }
+  }
+
+  // Cycle active weapon (e.g. via mouse wheel)
+  public cycleWeapon(dir: number = 1) {
+    const idx = this.unlockedWeapons.indexOf(this.currentWeapon);
+    const nextIdx = (idx + dir + this.unlockedWeapons.length) % this.unlockedWeapons.length;
+    this.setWeapon(this.unlockedWeapons[nextIdx]);
+  }
+
   // Fire active weapon
   public fire(vfx: ParticleFX): Projectile[] {
     if (this.fireCooldown > 0 || this.stunTimer > 0 || !this.isAlive) return [];
 
-    this.fireCooldown = this.maxFireCooldown;
-    this.recoilOffset = 5;
+    this.recoilOffset = 6;
 
     const hasDual = playerInventory.hasChip('dual_barrel');
-    const hasLaser = playerInventory.hasChip('railgun_laser');
-    const hasMortar = playerInventory.hasChip('mortar_siege');
     const hasSteelBreaker = playerInventory.hasChip('steel_breaker') || playerInventory.starsCollected >= 3;
     const hasBouncing = playerInventory.hasChip('bouncing_rounds');
-    const hasTesla = playerInventory.hasChip('tesla_overload');
-    const hasIncendiary = playerInventory.hasChip('incendiary_rounds');
-    const hasCryo = playerInventory.hasChip('cryo_shells');
     const hasVelocity = playerInventory.hasChip('high_velocity');
+    const hasRapid = playerInventory.hasChip('rapid_loader');
 
-    const baseSpeed = hasVelocity ? 480 : 360;
-    const baseDamage = hasVelocity ? 35 : 30;
+    const cooldownMod = hasRapid ? 0.72 : 1.0;
+    const baseDamage = hasVelocity ? 38 : 32;
 
     const bullets: Projectile[] = [];
 
@@ -221,81 +297,156 @@ export class PlayerTank extends Tank {
     // Eject spent brass shell casing
     vfx.ejectShellCasing(this.x, this.y, this.turretAngle);
 
-    if (hasLaser) {
-      // High-Energy Railgun Beam
-      bullets.push(new Projectile({
-        x: muzzleX,
-        y: muzzleY,
-        vx: Math.cos(this.turretAngle) * 700,
-        vy: Math.sin(this.turretAngle) * 700,
-        angle: this.turretAngle,
-        damage: baseDamage * 1.8,
-        speed: 700,
-        owner: 'player',
-        canBreakSteel: hasSteelBreaker,
-        isLaser: true
-      }));
-      sounds.playShoot('laser');
-      vfx.spawnMuzzleFlash(muzzleX, muzzleY, this.turretAngle, '#38bdf8');
-    } else if (hasMortar) {
-      // Siege Mortar
-      bullets.push(new Projectile({
-        x: muzzleX,
-        y: muzzleY,
-        vx: Math.cos(this.turretAngle) * 280,
-        vy: Math.sin(this.turretAngle) * 280,
-        angle: this.turretAngle,
-        damage: baseDamage * 2.2,
-        speed: 280,
-        owner: 'player',
-        canBreakSteel: hasSteelBreaker,
-        isMortar: true
-      }));
-      sounds.playShoot('heavy');
-      vfx.spawnMuzzleFlash(muzzleX, muzzleY, this.turretAngle, '#f97316');
-    } else if (hasDual) {
-      // Twin Parallel Shells
-      const perpX = Math.cos(this.turretAngle + Math.PI / 2) * 8;
-      const perpY = Math.sin(this.turretAngle + Math.PI / 2) * 8;
-
-      for (const side of [-1, 1]) {
+    switch (this.currentWeapon) {
+      case 'laser': {
+        // 1. High-Energy Prismatic Laser Beam (Instant piercing line)
+        this.fireCooldown = 0.42 * cooldownMod;
         bullets.push(new Projectile({
-          x: muzzleX + perpX * side,
-          y: muzzleY + perpY * side,
-          vx: Math.cos(this.turretAngle) * baseSpeed,
-          vy: Math.sin(this.turretAngle) * baseSpeed,
+          x: muzzleX,
+          y: muzzleY,
+          vx: Math.cos(this.turretAngle) * 850,
+          vy: Math.sin(this.turretAngle) * 850,
           angle: this.turretAngle,
-          damage: baseDamage * 0.9,
-          speed: baseSpeed,
+          damage: baseDamage * 1.7,
+          speed: 850,
           owner: 'player',
           canBreakSteel: hasSteelBreaker,
-          bouncesLeft: hasBouncing ? 2 : 0,
-          isTesla: hasTesla,
-          isIncendiary: hasIncendiary,
-          isCryo: hasCryo,
+          isLaser: true,
+          elementType: 'laser'
         }));
+        sounds.playShoot('laser');
+        vfx.spawnMuzzleFlash(muzzleX, muzzleY, this.turretAngle, '#00f0ff');
+        break;
       }
-      sounds.playShoot('dual');
-      vfx.spawnMuzzleFlash(muzzleX, muzzleY, this.turretAngle, '#fde047');
-    } else {
-      // Standard Shell
-      bullets.push(new Projectile({
-        x: muzzleX,
-        y: muzzleY,
-        vx: Math.cos(this.turretAngle) * baseSpeed,
-        vy: Math.sin(this.turretAngle) * baseSpeed,
-        angle: this.turretAngle,
-        damage: baseDamage,
-        speed: baseSpeed,
-        owner: 'player',
-        canBreakSteel: hasSteelBreaker,
-        bouncesLeft: hasBouncing ? 2 : 0,
-        isTesla: hasTesla,
-        isIncendiary: hasIncendiary,
-        isCryo: hasCryo,
-      }));
-      sounds.playShoot('standard');
-      vfx.spawnMuzzleFlash(muzzleX, muzzleY, this.turretAngle, '#fde047');
+
+      case 'tesla': {
+        // 2. Tesla Ball Lightning Plasma Orb (Discharges radial arcs with EMP stun)
+        this.fireCooldown = 0.50 * cooldownMod;
+        bullets.push(new Projectile({
+          x: muzzleX,
+          y: muzzleY,
+          vx: Math.cos(this.turretAngle) * 220,
+          vy: Math.sin(this.turretAngle) * 220,
+          angle: this.turretAngle,
+          damage: baseDamage * 1.2,
+          speed: 220,
+          owner: 'player',
+          canBreakSteel: hasSteelBreaker,
+          isTesla: true,
+          elementType: 'tesla'
+        }));
+        sounds.playShoot('tesla');
+        vfx.spawnMuzzleFlash(muzzleX, muzzleY, this.turretAngle, '#38bdf8');
+        break;
+      }
+
+      case 'vortex': {
+        // 3. Gale Vortex Singularity (Pulls enemy tanks, deflects enemy bullets)
+        this.fireCooldown = 0.65 * cooldownMod;
+        bullets.push(new Projectile({
+          x: muzzleX,
+          y: muzzleY,
+          vx: Math.cos(this.turretAngle) * 420,
+          vy: Math.sin(this.turretAngle) * 420,
+          angle: this.turretAngle,
+          damage: baseDamage * 1.1,
+          speed: 420,
+          owner: 'player',
+          canBreakSteel: hasSteelBreaker,
+          isVortex: true,
+          elementType: 'vortex'
+        }));
+        sounds.playShoot('vortex');
+        vfx.spawnMuzzleFlash(muzzleX, muzzleY, this.turretAngle, '#10b981');
+        break;
+      }
+
+      case 'napalm': {
+        // 4. Napalm Mortar (Explodes into persistent burning ground fire)
+        this.fireCooldown = 0.55 * cooldownMod;
+        bullets.push(new Projectile({
+          x: muzzleX,
+          y: muzzleY,
+          vx: Math.cos(this.turretAngle) * 290,
+          vy: Math.sin(this.turretAngle) * 290,
+          angle: this.turretAngle,
+          damage: baseDamage * 1.4,
+          speed: 290,
+          owner: 'player',
+          canBreakSteel: hasSteelBreaker,
+          isNapalm: true,
+          isMortar: true,
+          elementType: 'napalm'
+        }));
+        sounds.playShoot('napalm');
+        vfx.spawnMuzzleFlash(muzzleX, muzzleY, this.turretAngle, '#f97316');
+        break;
+      }
+
+      case 'cryo': {
+        // 5. Cryo Frost Nova (Explodes in wide sub-zero frost wave, freezes enemies solid)
+        this.fireCooldown = 0.48 * cooldownMod;
+        bullets.push(new Projectile({
+          x: muzzleX,
+          y: muzzleY,
+          vx: Math.cos(this.turretAngle) * 380,
+          vy: Math.sin(this.turretAngle) * 380,
+          angle: this.turretAngle,
+          damage: baseDamage * 1.3,
+          speed: 380,
+          owner: 'player',
+          canBreakSteel: hasSteelBreaker,
+          isCryo: true,
+          elementType: 'cryo'
+        }));
+        sounds.playShoot('cryo');
+        vfx.spawnMuzzleFlash(muzzleX, muzzleY, this.turretAngle, '#93c5fd');
+        break;
+      }
+
+      case 'standard':
+      default: {
+        // 6. Heavy AP Kinetic Ballistic Artillery (Twin-barrel spread if unlocked, ricochet bounce)
+        this.fireCooldown = 0.35 * cooldownMod;
+        const speed = hasVelocity ? 480 : 380;
+        if (hasDual) {
+          const perpX = Math.cos(this.turretAngle + Math.PI / 2) * 8;
+          const perpY = Math.sin(this.turretAngle + Math.PI / 2) * 8;
+          for (const side of [-1, 1]) {
+            bullets.push(new Projectile({
+              x: muzzleX + perpX * side,
+              y: muzzleY + perpY * side,
+              vx: Math.cos(this.turretAngle) * speed,
+              vy: Math.sin(this.turretAngle) * speed,
+              angle: this.turretAngle,
+              damage: baseDamage * 0.95,
+              speed,
+              owner: 'player',
+              canBreakSteel: hasSteelBreaker,
+              bouncesLeft: hasBouncing ? 2 : 0,
+              elementType: 'kinetic'
+            }));
+          }
+          sounds.playShoot('dual');
+        } else {
+          bullets.push(new Projectile({
+            x: muzzleX,
+            y: muzzleY,
+            vx: Math.cos(this.turretAngle) * speed,
+            vy: Math.sin(this.turretAngle) * speed,
+            angle: this.turretAngle,
+            damage: baseDamage,
+            speed,
+            owner: 'player',
+            canBreakSteel: hasSteelBreaker,
+            bouncesLeft: hasBouncing ? 2 : 0,
+            elementType: 'kinetic'
+          }));
+          sounds.playShoot('standard');
+        }
+        vfx.spawnMuzzleFlash(muzzleX, muzzleY, this.turretAngle, '#fde047');
+        break;
+      }
     }
 
     return bullets;

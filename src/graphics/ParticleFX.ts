@@ -42,11 +42,43 @@ export interface ScorchMark {
   alpha: number;
 }
 
+export interface GroundFirePool {
+  x: number;
+  y: number;
+  radius: number;
+  life: number;
+  maxLife: number;
+  tickTimer: number;
+}
+
+export interface VortexSingularity {
+  x: number;
+  y: number;
+  radius: number;
+  life: number;
+  maxLife: number;
+  angle: number;
+  pullForce: number;
+}
+
+export interface LightningArc {
+  x1: number;
+  y1: number;
+  x2: number;
+  y2: number;
+  life: number;
+  maxLife: number;
+  color: string;
+}
+
 export class ParticleFX {
   public particles: Particle[] = [];
   public floatingTexts: FloatingText[] = [];
   public treadMarks: TreadMark[] = [];
   public scorchMarks: ScorchMark[] = [];
+  public firePools: GroundFirePool[] = [];
+  public vortexes: VortexSingularity[] = [];
+  public lightningArcs: LightningArc[] = [];
 
   public update(dt: number) {
     // Update particles
@@ -101,9 +133,75 @@ export class ParticleFX {
         this.scorchMarks.splice(i, 1);
       }
     }
+
+    // Update Fire Pools
+    for (let i = this.firePools.length - 1; i >= 0; i--) {
+      const fp = this.firePools[i];
+      fp.life -= dt;
+      fp.tickTimer += dt;
+      // Spawn small flame flickers
+      if (Math.random() < 0.35) {
+        const ang = Math.random() * Math.PI * 2;
+        const dist = Math.random() * (fp.radius * 0.75);
+        this.particles.push({
+          x: fp.x + Math.cos(ang) * dist,
+          y: fp.y + Math.sin(ang) * dist,
+          vx: (Math.random() - 0.5) * 20,
+          vy: -30 - Math.random() * 40,
+          size: 6 + Math.random() * 8,
+          color: Math.random() < 0.5 ? '#f97316' : '#ef4444',
+          alpha: 0.9,
+          life: 0.3 + Math.random() * 0.25,
+          maxLife: 0.55,
+          shape: 'circle'
+        });
+      }
+      if (fp.life <= 0) {
+        this.firePools.splice(i, 1);
+      }
+    }
+
+    // Update Vortex Singularity
+    for (let i = this.vortexes.length - 1; i >= 0; i--) {
+      const v = this.vortexes[i];
+      v.life -= dt;
+      v.angle += dt * 6.0;
+      // Spawn inward swirl particles
+      if (Math.random() < 0.6) {
+        const ang = Math.random() * Math.PI * 2;
+        const dist = v.radius * (0.6 + Math.random() * 0.4);
+        const px = v.x + Math.cos(ang) * dist;
+        const py = v.y + Math.sin(ang) * dist;
+        const inAngle = Math.atan2(v.y - py, v.x - px) + 0.4;
+        this.particles.push({
+          x: px,
+          y: py,
+          vx: Math.cos(inAngle) * 160,
+          vy: Math.sin(inAngle) * 160,
+          size: 3 + Math.random() * 4,
+          color: '#10b981',
+          alpha: 0.85,
+          life: 0.25,
+          maxLife: 0.25,
+          shape: 'circle'
+        });
+      }
+      if (v.life <= 0) {
+        this.vortexes.splice(i, 1);
+      }
+    }
+
+    // Update Lightning Arcs
+    for (let i = this.lightningArcs.length - 1; i >= 0; i--) {
+      const la = this.lightningArcs[i];
+      la.life -= dt;
+      if (la.life <= 0) {
+        this.lightningArcs.splice(i, 1);
+      }
+    }
   }
 
-  // Draw ground decals (scorch craters & tread marks) under entities
+  // Draw ground decals (scorch craters & tread marks, fire pools, vortexes) under entities
   public renderGroundDecals(ctx: CanvasRenderingContext2D) {
     // 1. Scorch marks / blast craters
     for (const sm of this.scorchMarks) {
@@ -119,7 +217,54 @@ export class ParticleFX {
       ctx.restore();
     }
 
-    // 2. Tread marks
+    // 2. Persistent Ground Fire Pools
+    for (const fp of this.firePools) {
+      ctx.save();
+      const progress = fp.life / fp.maxLife;
+      const alpha = Math.min(1.0, progress * 1.5) * 0.85;
+      const grad = ctx.createRadialGradient(fp.x, fp.y, 5, fp.x, fp.y, fp.radius);
+      grad.addColorStop(0, `rgba(254, 240, 138, ${alpha * 0.9})`);
+      grad.addColorStop(0.35, `rgba(249, 115, 22, ${alpha * 0.75})`);
+      grad.addColorStop(0.75, `rgba(220, 38, 38, ${alpha * 0.4})`);
+      grad.addColorStop(1, 'rgba(153, 27, 27, 0)');
+      ctx.fillStyle = grad;
+      ctx.beginPath();
+      ctx.arc(fp.x, fp.y, fp.radius, 0, Math.PI * 2);
+      ctx.fill();
+
+      // Flickering inner fire rings
+      ctx.strokeStyle = `rgba(251, 146, 60, ${alpha * 0.6})`;
+      ctx.lineWidth = 2.5;
+      ctx.beginPath();
+      ctx.arc(fp.x, fp.y, fp.radius * 0.65, 0, Math.PI * 2);
+      ctx.stroke();
+      ctx.restore();
+    }
+
+    // 3. Gale Vortex Singularity Ground Ripple
+    for (const v of this.vortexes) {
+      ctx.save();
+      ctx.translate(v.x, v.y);
+      ctx.rotate(v.angle);
+      const alpha = (v.life / v.maxLife) * 0.65;
+      ctx.strokeStyle = `rgba(16, 185, 129, ${alpha})`;
+      ctx.lineWidth = 2.5;
+      // Draw swirling spiral arms
+      for (let arm = 0; arm < 3; arm++) {
+        ctx.beginPath();
+        for (let r = 8; r < v.radius; r += 8) {
+          const a = (r / 20) + (arm * (Math.PI * 2 / 3));
+          const px = Math.cos(a) * r;
+          const py = Math.sin(a) * r;
+          if (r === 8) ctx.moveTo(px, py);
+          else ctx.lineTo(px, py);
+        }
+        ctx.stroke();
+      }
+      ctx.restore();
+    }
+
+    // 4. Tread marks
     for (const tm of this.treadMarks) {
       ctx.save();
       ctx.translate(tm.x, tm.y);
@@ -185,6 +330,31 @@ export class ParticleFX {
       ctx.restore();
     }
 
+    // Render Tesla high-voltage electric arcs
+    for (const la of this.lightningArcs) {
+      ctx.save();
+      const alpha = Math.min(1.0, (la.life / la.maxLife) * 1.5);
+      ctx.globalAlpha = alpha;
+      ctx.strokeStyle = la.color;
+      ctx.lineWidth = 2.5;
+      ctx.shadowColor = la.color;
+      ctx.shadowBlur = 8;
+
+      ctx.beginPath();
+      ctx.moveTo(la.x1, la.y1);
+      const segments = 4;
+      const dx = (la.x2 - la.x1) / segments;
+      const dy = (la.y2 - la.y1) / segments;
+      for (let s = 1; s < segments; s++) {
+        const midX = la.x1 + dx * s + (Math.random() - 0.5) * 20;
+        const midY = la.y1 + dy * s + (Math.random() - 0.5) * 20;
+        ctx.lineTo(midX, midY);
+      }
+      ctx.lineTo(la.x2, la.y2);
+      ctx.stroke();
+      ctx.restore();
+    }
+
     // Render floating combat text
     for (const ft of this.floatingTexts) {
       ctx.save();
@@ -199,6 +369,79 @@ export class ParticleFX {
       ctx.fillStyle = ft.color;
       ctx.fillText(ft.text, ft.x, ft.y);
       ctx.restore();
+    }
+  }
+
+  // Add persistent Ground Fire Pool
+  public addFirePool(x: number, y: number, radius: number = 75, duration: number = 4.5) {
+    this.firePools.push({
+      x, y, radius, life: duration, maxLife: duration, tickTimer: 0
+    });
+  }
+
+  // Add active Gale Vortex Singularity
+  public addVortex(x: number, y: number, radius: number = 180, duration: number = 3.5) {
+    this.vortexes.push({
+      x, y, radius, life: duration, maxLife: duration, angle: 0, pullForce: 220
+    });
+  }
+
+  // Add high-voltage electric arc between two points
+  public addLightningArc(x1: number, y1: number, x2: number, y2: number, color: string = '#38bdf8') {
+    this.lightningArcs.push({
+      x1, y1, x2, y2, life: 0.12, maxLife: 0.12, color
+    });
+  }
+
+  // Spawn Frost Nova crystalline freezing explosion
+  public spawnFrostNovaExplosion(x: number, y: number, radius: number = 130) {
+    // Frost shock ring
+    this.particles.push({
+      x, y, vx: 0, vy: 0,
+      size: radius,
+      color: '#38bdf8',
+      alpha: 1.0,
+      life: 0.4,
+      maxLife: 0.4,
+      shape: 'ring'
+    });
+
+    // Crystalline ice shards
+    for (let i = 0; i < 28; i++) {
+      const ang = Math.random() * Math.PI * 2;
+      const spd = 80 + Math.random() * 220;
+      this.particles.push({
+        x, y,
+        vx: Math.cos(ang) * spd,
+        vy: Math.sin(ang) * spd,
+        size: 5 + Math.random() * 8,
+        color: Math.random() < 0.6 ? '#bae6fd' : '#ffffff',
+        alpha: 1.0,
+        life: 0.35 + Math.random() * 0.3,
+        maxLife: 0.65,
+        rotation: Math.random() * Math.PI * 2,
+        vRot: (Math.random() - 0.5) * 15,
+        shape: 'debris'
+      });
+    }
+  }
+
+  // Spawn Prism Laser Refraction Sparks
+  public spawnPrismRefraction(x: number, y: number, angle: number) {
+    for (let i = 0; i < 12; i++) {
+      const spread = angle + (Math.random() - 0.5) * 1.5;
+      const spd = 120 + Math.random() * 200;
+      this.particles.push({
+        x, y,
+        vx: Math.cos(spread) * spd,
+        vy: Math.sin(spread) * spd,
+        size: 3,
+        color: Math.random() < 0.5 ? '#06b6d4' : '#e879f9',
+        alpha: 1.0,
+        life: 0.2 + Math.random() * 0.2,
+        maxLife: 0.4,
+        shape: 'spark'
+      });
     }
   }
 
