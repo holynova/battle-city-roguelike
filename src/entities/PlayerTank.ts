@@ -218,6 +218,9 @@ export class PlayerTank extends Tank {
     const muzzleX = this.x + Math.cos(this.turretAngle) * barrelLen;
     const muzzleY = this.y + Math.sin(this.turretAngle) * barrelLen;
 
+    // Eject spent brass shell casing
+    vfx.ejectShellCasing(this.x, this.y, this.turretAngle);
+
     if (hasLaser) {
       // High-Energy Railgun Beam
       bullets.push(new Projectile({

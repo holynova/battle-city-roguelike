@@ -17,6 +17,7 @@ import { UIOverlay } from '../ui/UIOverlay';
 import { campaignMap, MapNode } from '../roguelite/CampaignMap';
 import { playerInventory } from '../roguelite/Inventory';
 import { sounds } from '../audio/SoundEffects';
+import { TacticalIcons } from '../graphics/TacticalIcons';
 
 export type GameState = 'START_MENU' | 'MAP_VIEW' | 'PLAYING' | 'CARD_DRAFT' | 'SHOP' | 'REST' | 'EVENT' | 'GAME_OVER' | 'VICTORY';
 
@@ -191,25 +192,29 @@ export class Engine {
     box.className = 'modal-box';
 
     box.innerHTML = `
-      <div style="font-size: 40px; margin-bottom: 8px;">🛡️ 钢铁誓约：重装肉鸽坦克 🦅</div>
-      <div style="font-size: 18px; color: #38bdf8; font-weight: 700; margin-bottom: 6px;">
+      <div class="modal-title" style="font-size: 32px; margin-bottom: 8px;">
+        ${TacticalIcons.getEagleLogo(36)}
+        <span>钢铁誓约：重装肉鸽坦克</span>
+        ${TacticalIcons.getEagleLogo(36)}
+      </div>
+      <div style="font-size: 17px; color: #38bdf8; font-weight: 700; margin-bottom: 6px; letter-spacing: 0.5px;">
         BATTLE CITY: ROGUE BASTION (FC经典坦克大战 × 肉鸽HD重制)
       </div>
-      <div class="modal-subtitle">高精视网膜画面 · 双轴独立炮塔 · 尖塔战略路线 · 18+ 质变改装芯片</div>
+      <div class="modal-subtitle">高精视网膜画质 · 双轴独立炮塔 · 尖塔战略路线 · 18+ 质变改装芯片</div>
 
-      <div style="background: rgba(30, 41, 59, 0.6); border-radius: 12px; padding: 20px; text-align: left; max-width: 580px; margin: 0 auto 28px;">
-        <div style="font-weight: 700; color: #facc15; margin-bottom: 8px; font-size: 15px;">🎮 战地操控指令：</div>
+      <div style="background: rgba(30, 41, 59, 0.6); border: 1px solid rgba(56, 189, 248, 0.2); border-radius: 14px; padding: 22px; text-align: left; max-width: 600px; margin: 0 auto 28px;">
+        <div style="font-weight: 700; color: #facc15; margin-bottom: 10px; font-size: 15px; letter-spacing: 0.5px;">战地指令与火控指南：</div>
         <div style="font-size: 14px; line-height: 1.8; color: #e2e8f0;">
-          • <b>WASD / 方向键</b>：驾驶战车底盘移动（带惯性转向与履带印痕）<br/>
-          • <b>鼠标移动</b>：独立 360° 旋转炮塔瞄准<br/>
-          • <b>鼠标左键 / 空格</b>：主炮开火（支持双联、磁轨激光、高爆迫击炮）<br/>
-          • <b>Shift / 鼠标右键</b>：战术喷射冲刺（瞬时无敌突进）<br/>
-          • <b>老鹰基地</b>：自带能量护盾与报警器，可加装全自动防空副炮！
+          • <b>WASD / 方向键</b>：驾驶战车底盘移动（带惯性物理与高精履带压痕）<br/>
+          • <b>鼠标移动</b>：独立 360° 旋转炮塔自由瞄准<br/>
+          • <b>鼠标左键 / 空格</b>：主炮开火（自动抛射黄铜弹壳，支持双联、磁轨、高爆迫击炮）<br/>
+          • <b>Shift / 鼠标右键</b>：战术超燃冲刺（瞬时无敌突进）<br/>
+          • <b>老鹰基地</b>：自带能量护盾与智能预警，可接入 360° 自动防御副炮！
         </div>
       </div>
 
-      <button class="btn-primary" id="btn-start-run" style="font-size: 18px; padding: 14px 40px;">
-        🚀 开始战役 (START CAMPAIGN)
+      <button class="btn-primary" id="btn-start-run" style="font-size: 17px; padding: 14px 44px;">
+        开始战役 (START CAMPAIGN)
       </button>
     `;
 
@@ -733,6 +738,22 @@ export class Engine {
     for (const b of this.projectiles) {
       b.render(this.ctx);
     }
+
+    // Dynamic Lighting Bloom Pass (Illuminates battlefield and obstacles)
+    this.ctx.save();
+    this.ctx.globalCompositeOperation = 'lighter';
+    for (const b of this.projectiles) {
+      const glowR = b.isLaser ? 36 : (b.isMortar ? 28 : 18);
+      const grad = this.ctx.createRadialGradient(b.x, b.y, 1, b.x, b.y, glowR);
+      const glowColor = b.owner === 'player' ? 'rgba(56, 189, 248, 0.25)' : 'rgba(239, 68, 68, 0.22)';
+      grad.addColorStop(0, glowColor);
+      grad.addColorStop(1, 'rgba(0, 0, 0, 0)');
+      this.ctx.fillStyle = grad;
+      this.ctx.beginPath();
+      this.ctx.arc(b.x, b.y, glowR, 0, Math.PI * 2);
+      this.ctx.fill();
+    }
+    this.ctx.restore();
 
     // 8. Top Tile Layer (Forests that hide tanks underneath!)
     this.map.renderTopLayer(this.ctx);

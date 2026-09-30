@@ -63,7 +63,7 @@ export class HUD {
     const eagleX = 220;
     ctx.fillStyle = base.hp <= 30 ? '#ef4444' : '#fbbf24';
     ctx.font = 'bold 13px system-ui, sans-serif';
-    ctx.fillText('🦅 EAGLE BASE', eagleX, 18);
+    ctx.fillText('COMMAND BASTION', eagleX, 18);
 
     ctx.fillStyle = 'rgba(0, 0, 0, 0.6)';
     ctx.fillRect(eagleX, 24, hpBarW, hpBarH);
@@ -85,11 +85,11 @@ export class HUD {
     ctx.textAlign = 'center';
     if (isBossFight) {
       ctx.fillStyle = '#ef4444';
-      ctx.font = 'bold 15px system-ui, sans-serif';
-      ctx.fillText('⚠️ BOSS BATTLE: GOLIATH ⚠️', width / 2, 30);
+      ctx.font = 'bold 14px system-ui, sans-serif';
+      ctx.fillText('[ CRITICAL ALERT : GOLIATH LAND CRUISER ]', width / 2, 30);
     } else {
       ctx.fillStyle = '#e2e8f0';
-      ctx.font = 'bold 14px system-ui, sans-serif';
+      ctx.font = 'bold 13px system-ui, sans-serif';
       ctx.fillText(`ENEMY SQUAD: ${enemiesRemaining} REMAINING`, width / 2, 30);
     }
 
@@ -101,7 +101,7 @@ export class HUD {
 
     ctx.fillStyle = '#facc15';
     ctx.font = 'bold 14px system-ui, sans-serif';
-    ctx.fillText(`⚙️ ${playerInventory.scraps} SCRAP`, width - 20, 36);
+    ctx.fillText(`${playerInventory.scraps} SCRAP`, width - 20, 36);
 
     // -------------------------------------------------------------
     // BOTTOM STATUS RIBBON (Dash Gauge & Active Chips)
@@ -130,17 +130,32 @@ export class HUD {
     // Active Chips list
     ctx.textAlign = 'right';
     const chips = playerInventory.getActiveChips();
-    let chipStr = '';
-    for (const c of chips) {
-      chipStr += `${c.chip.icon}${c.count > 1 ? `x${c.count}` : ''} `;
-    }
-    if (chipStr.length > 0) {
-      ctx.fillStyle = '#f8fafc';
-      ctx.font = '14px system-ui, sans-serif';
-      ctx.fillText(`CHIPS: ${chipStr}`, width - 20, bottomY + 23);
+    if (chips.length > 0) {
+      let badgeX = width - 20;
+      for (let i = chips.length - 1; i >= 0; i--) {
+        const item = chips[i];
+        const label = `${item.chip.nameZh.slice(0, 4)}${item.count > 1 ? `×${item.count}` : ''}`;
+        ctx.font = 'bold 11px system-ui, sans-serif';
+        const txtW = ctx.measureText(label).width;
+
+        // Background chip pill
+        ctx.fillStyle = 'rgba(30, 41, 59, 0.9)';
+        ctx.strokeStyle = '#38bdf8';
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        ctx.roundRect(badgeX - txtW - 12, bottomY + 8, txtW + 10, 20, 4);
+        ctx.fill();
+        ctx.stroke();
+
+        ctx.fillStyle = '#f8fafc';
+        ctx.fillText(label, badgeX - 7, bottomY + 22);
+
+        badgeX -= txtW + 18;
+      }
     } else {
       ctx.fillStyle = '#64748b';
-      ctx.fillText('NO CHIPS EQUIPPED', width - 20, bottomY + 23);
+      ctx.font = 'bold 12px system-ui, sans-serif';
+      ctx.fillText('NO UPGRADE CHIPS EQUIPPED', width - 20, bottomY + 22);
     }
 
     ctx.restore();

@@ -14,7 +14,7 @@ export interface Particle {
   maxLife: number;
   rotation?: number;
   vRot?: number;
-  shape?: 'circle' | 'debris' | 'spark' | 'smoke' | 'ring';
+  shape?: 'circle' | 'debris' | 'spark' | 'smoke' | 'ring' | 'casing';
 }
 
 export interface FloatingText {
@@ -35,10 +35,18 @@ export interface TreadMark {
   width: number;
 }
 
+export interface ScorchMark {
+  x: number;
+  y: number;
+  r: number;
+  alpha: number;
+}
+
 export class ParticleFX {
   public particles: Particle[] = [];
   public floatingTexts: FloatingText[] = [];
   public treadMarks: TreadMark[] = [];
+  public scorchMarks: ScorchMark[] = [];
 
   public update(dt: number) {
     // Update particles
@@ -77,7 +85,7 @@ export class ParticleFX {
       }
     }
 
-    // Fade tread marks slowly
+    // Fade tread marks and scorch marks slowly
     for (let i = this.treadMarks.length - 1; i >= 0; i--) {
       const tm = this.treadMarks[i];
       tm.alpha -= 0.05 * dt;
@@ -85,10 +93,33 @@ export class ParticleFX {
         this.treadMarks.splice(i, 1);
       }
     }
+
+    for (let i = this.scorchMarks.length - 1; i >= 0; i--) {
+      const sm = this.scorchMarks[i];
+      sm.alpha -= 0.015 * dt;
+      if (sm.alpha <= 0) {
+        this.scorchMarks.splice(i, 1);
+      }
+    }
   }
 
-  // Draw ground decals (tread marks) under entities
+  // Draw ground decals (scorch craters & tread marks) under entities
   public renderGroundDecals(ctx: CanvasRenderingContext2D) {
+    // 1. Scorch marks / blast craters
+    for (const sm of this.scorchMarks) {
+      ctx.save();
+      const grad = ctx.createRadialGradient(sm.x, sm.y, 2, sm.x, sm.y, sm.r);
+      grad.addColorStop(0, `rgba(10, 8, 7, ${sm.alpha * 0.75})`);
+      grad.addColorStop(0.6, `rgba(28, 25, 23, ${sm.alpha * 0.4})`);
+      grad.addColorStop(1, 'rgba(0, 0, 0, 0)');
+      ctx.fillStyle = grad;
+      ctx.beginPath();
+      ctx.arc(sm.x, sm.y, sm.r, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.restore();
+    }
+
+    // 2. Tread marks
     for (const tm of this.treadMarks) {
       ctx.save();
       ctx.translate(tm.x, tm.y);
@@ -120,6 +151,14 @@ export class ParticleFX {
         ctx.rotate(p.rotation || 0);
         ctx.fillStyle = p.color;
         ctx.fillRect(-p.size / 2, -p.size / 2, p.size, p.size * 0.7);
+      } else if (p.shape === 'casing') {
+        ctx.translate(p.x, p.y);
+        ctx.rotate(p.rotation || 0);
+        // Ejected brass shell casing
+        ctx.fillStyle = '#facc15';
+        ctx.fillRect(-p.size, -p.size * 0.4, p.size * 2, p.size * 0.8);
+        ctx.fillStyle = '#ca8a04';
+        ctx.fillRect(-p.size, -p.size * 0.4, 2, p.size * 0.8);
       } else if (p.shape === 'spark') {
         ctx.translate(p.x, p.y);
         const speed = Math.hypot(p.vx, p.vy);
@@ -325,6 +364,36 @@ export class ParticleFX {
         shape: 'spark'
       });
     }
+
+    // Leave a persistent scorched blast crater on the ground
+    this.addScorchMark(x, y, isLarge ? 36 : 22);
+  }
+
+  // Add persistent scorch crater decal
+  public addScorchMark(x: number, y: number, r: number = 22) {
+    if (this.scorchMarks.length > 80) {
+      this.scorchMarks.shift();
+    }
+    this.scorchMarks.push({ x, y, r, alpha: 1.0 });
+  }
+
+  // Eject brass spent shell casing
+  public ejectShellCasing(x: number, y: number, turretAngle: number) {
+    const ejectAngle = turretAngle + Math.PI / 2 + (Math.random() - 0.5) * 0.4;
+    const speed = 80 + Math.random() * 60;
+    this.particles.push({
+      x, y,
+      vx: Math.cos(ejectAngle) * speed,
+      vy: Math.sin(ejectAngle) * speed,
+      size: 4,
+      color: '#facc15',
+      alpha: 1.0,
+      life: 2.0,
+      maxLife: 2.0,
+      rotation: Math.random() * Math.PI * 2,
+      vRot: (Math.random() - 0.5) * 25,
+      shape: 'casing'
+    });
   }
 
   // Floating text
