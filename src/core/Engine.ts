@@ -24,6 +24,7 @@ import { campaignMap, MapNode } from '../roguelite/CampaignMap';
 import { playerInventory } from '../roguelite/Inventory';
 import { sounds } from '../audio/SoundEffects';
 import { bgm } from '../audio/MusicEngine';
+import { HDGraphics } from '../graphics/HDGraphics';
 
 export type GameState = 'START_MENU' | 'MAP_VIEW' | 'PLAYING' | 'CARD_DRAFT' | 'SHOP' | 'REST' | 'EVENT' | 'GAME_OVER' | 'VICTORY';
 
@@ -97,6 +98,7 @@ export class Engine {
     this.vfx = new ParticleFX();
     this.ui = new UIOverlay();
 
+    HDGraphics.initAssets();
     this.setupHighDPI();
     this.setupInputs();
     this.showStartMenu();
@@ -1084,9 +1086,14 @@ export class Engine {
     this.ctx.translate(this.arenaX + shakeX, this.arenaY + shakeY);
     this.ctx.scale(this.arenaScale, this.arenaScale);
 
-    // Arena Floor Bed
-    this.ctx.fillStyle = '#0f172a';
-    this.ctx.fillRect(0, 0, this.arenaSize, this.arenaSize);
+    // Arena Floor Bed (High-resolution textured warzone terrain)
+    const groundTex = HDGraphics.getBattlefieldGround();
+    if (groundTex) {
+      this.ctx.drawImage(groundTex, 0, 0, this.arenaSize, this.arenaSize);
+    } else {
+      this.ctx.fillStyle = '#0f172a';
+      this.ctx.fillRect(0, 0, this.arenaSize, this.arenaSize);
+    }
 
     // Subtle ambient glow border
     ctxSoftGlow: {

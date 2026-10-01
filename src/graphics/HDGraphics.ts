@@ -6,6 +6,53 @@
 
 export class HDGraphics {
   private static cache: Map<string, HTMLCanvasElement> = new Map();
+  private static imageAssets: Map<string, HTMLImageElement> = new Map();
+  private static initialized: boolean = false;
+
+  // Initialize and preload all high-res textured art assets
+  public static initAssets() {
+    if (this.initialized) return;
+    this.initialized = true;
+
+    const assets: Record<string, string> = {
+      ground: './assets/images/battlefield_ground.jpg',
+      brick: './assets/images/tile_brick.jpg',
+      steel: './assets/images/tile_steel.jpg',
+      forest: './assets/images/tile_forest.jpg',
+      water: './assets/images/tile_water.jpg',
+      eagle_bastion: './assets/images/eagle_bastion.jpg',
+      eagle_destroyed: './assets/images/eagle_destroyed.jpg',
+    };
+
+    for (const [key, src] of Object.entries(assets)) {
+      const img = new Image();
+      img.src = src;
+      img.onload = () => {
+        // Invalidate corresponding cache entries so high-res textures render immediately
+        if (key === 'ground') this.cache.delete('battlefield_ground');
+        if (key === 'brick') this.cache.delete('tile_brick');
+        if (key === 'steel') this.cache.delete('tile_steel');
+        if (key === 'forest') this.cache.delete('tile_forest');
+        if (key === 'water') {
+          for (let f = 0; f < 4; f++) this.cache.delete(`tile_water_${f}`);
+        }
+        if (key === 'eagle_bastion') this.cache.delete('eagle_base_false');
+        if (key === 'eagle_destroyed') this.cache.delete('eagle_base_true');
+      };
+      this.imageAssets.set(key, img);
+    }
+  }
+
+  private static getImage(key: string): HTMLImageElement | null {
+    if (!this.initialized) {
+      this.initAssets();
+    }
+    const img = this.imageAssets.get(key);
+    if (img && img.complete && img.naturalWidth > 0) {
+      return img;
+    }
+    return null;
+  }
 
   // Helper to create an offscreen canvas at a high resolution
   public static createCanvas(width: number, height: number): { canvas: HTMLCanvasElement; ctx: CanvasRenderingContext2D } {
@@ -16,6 +63,47 @@ export class HDGraphics {
     ctx.imageSmoothingEnabled = true;
     ctx.imageSmoothingQuality = 'high';
     return { canvas, ctx };
+  }
+
+  // -------------------------------------------------------------
+  // BATTLEFIELD ARENA GROUND (HIGH-RES TEXTURED WARZONE BED)
+  // -------------------------------------------------------------
+  public static getBattlefieldGround(): HTMLCanvasElement {
+    const key = 'battlefield_ground';
+    if (this.cache.has(key)) return this.cache.get(key)!;
+
+    const size = 676;
+    const { canvas, ctx } = this.createCanvas(size, size);
+    const img = this.getImage('ground');
+
+    if (img) {
+      // Draw high-resolution scorched earth, cracked asphalt, and hazard-striped plates
+      ctx.drawImage(img, 0, 0, size, size);
+
+      // Subtle atmospheric grid overlay for tactical military feel
+      ctx.strokeStyle = 'rgba(255, 255, 255, 0.04)';
+      ctx.lineWidth = 1;
+      const step = 52;
+      for (let x = 0; x <= size; x += step) {
+        ctx.beginPath();
+        ctx.moveTo(x, 0);
+        ctx.lineTo(x, size);
+        ctx.stroke();
+      }
+      for (let y = 0; y <= size; y += step) {
+        ctx.beginPath();
+        ctx.moveTo(0, y);
+        ctx.lineTo(size, y);
+        ctx.stroke();
+      }
+    } else {
+      // Fallback dark tactical floor
+      ctx.fillStyle = '#0f172a';
+      ctx.fillRect(0, 0, size, size);
+    }
+
+    this.cache.set(key, canvas);
+    return canvas;
   }
 
   // -------------------------------------------------------------
@@ -765,6 +853,40 @@ export class HDGraphics {
     const size = 128;
     const { canvas, ctx } = this.createCanvas(size, size);
 
+    const img = this.getImage(isDestroyed ? 'eagle_destroyed' : 'eagle_bastion');
+    if (img) {
+      ctx.save();
+      ctx.beginPath();
+      ctx.roundRect(8, 8, 112, 112, 16);
+      ctx.clip();
+      ctx.drawImage(img, 8, 8, 112, 112);
+      ctx.restore();
+
+      // Border and corner rivets
+      ctx.strokeStyle = isDestroyed ? '#ef4444' : '#f59e0b';
+      ctx.lineWidth = 3;
+      ctx.beginPath();
+      ctx.roundRect(8, 8, 112, 112, 16);
+      ctx.stroke();
+
+      if (!isDestroyed) {
+        // Cyan energy shield pulse corners
+        ctx.fillStyle = '#06b6d4';
+        ctx.shadowColor = '#22d3ee';
+        ctx.shadowBlur = 8;
+        const corners = [[14, 14], [114, 14], [14, 114], [114, 114]];
+        for (const [cx, cy] of corners) {
+          ctx.beginPath();
+          ctx.arc(cx, cy, 3, 0, Math.PI * 2);
+          ctx.fill();
+        }
+        ctx.shadowBlur = 0;
+      }
+
+      this.cache.set(key, canvas);
+      return canvas;
+    }
+
     if (isDestroyed) {
       // Scorched rubble and shattered eagle
       ctx.fillStyle = '#18181b';
@@ -893,6 +1015,28 @@ export class HDGraphics {
     const size = 64;
     const { canvas, ctx } = this.createCanvas(size, size);
 
+    const img = this.getImage('brick');
+    if (img) {
+      // Draw high-resolution textured brick wall
+      ctx.drawImage(img, 0, 0, size, size);
+
+      // Add clear mortar grid lines dividing into 4 quadrants (0..32, 32..64)
+      // for seamless compatibility with TileMap's quadrant destruction!
+      ctx.fillStyle = 'rgba(20, 20, 20, 0.75)';
+      ctx.fillRect(31, 0, 2, size); // Vertical center mortar seam
+      ctx.fillRect(0, 31, size, 2); // Horizontal center mortar seam
+
+      // Subtle quadrant highlight edges for 3D depth
+      ctx.fillStyle = 'rgba(255, 255, 255, 0.18)';
+      ctx.fillRect(0, 0, size, 1);
+      ctx.fillRect(0, 0, 1, size);
+      ctx.fillRect(33, 0, 1, size);
+      ctx.fillRect(0, 33, size, 1);
+
+      this.cache.set(key, canvas);
+      return canvas;
+    }
+
     // Mortar Background (Cement lines)
     ctx.fillStyle = '#262626';
     ctx.fillRect(0, 0, size, size);
@@ -949,6 +1093,31 @@ export class HDGraphics {
     const size = 64;
     const { canvas, ctx } = this.createCanvas(size, size);
 
+    const img = this.getImage('steel');
+    if (img) {
+      ctx.drawImage(img, 0, 0, size, size);
+
+      // Industrial border bevel & highlight
+      ctx.strokeStyle = 'rgba(255, 255, 255, 0.4)';
+      ctx.lineWidth = 1.5;
+      ctx.strokeRect(2, 2, size - 4, size - 4);
+
+      ctx.strokeStyle = 'rgba(0, 0, 0, 0.6)';
+      ctx.lineWidth = 1.5;
+      ctx.strokeRect(4, 4, size - 8, size - 8);
+
+      // 4 Heavy corner bolts
+      ctx.fillStyle = '#f1f5f9';
+      for (const [rx, ry] of [[8, 8], [size - 8, 8], [8, size - 8], [size - 8, size - 8]]) {
+        ctx.beginPath();
+        ctx.arc(rx, ry, 2.5, 0, Math.PI * 2);
+        ctx.fill();
+      }
+
+      this.cache.set(key, canvas);
+      return canvas;
+    }
+
     // Titanium Plate
     const grad = ctx.createLinearGradient(0, 0, size, size);
     grad.addColorStop(0, '#cbd5e1');
@@ -999,6 +1168,25 @@ export class HDGraphics {
     const size = 64;
     const { canvas, ctx } = this.createCanvas(size, size);
 
+    const img = this.getImage('forest');
+    if (img) {
+      ctx.save();
+      ctx.beginPath();
+      ctx.roundRect(2, 2, size - 4, size - 4, 8);
+      ctx.clip();
+      ctx.drawImage(img, 0, 0, size, size);
+      ctx.restore();
+
+      // Top leafy specular highlights
+      ctx.fillStyle = 'rgba(74, 222, 128, 0.22)';
+      ctx.beginPath();
+      ctx.arc(24, 24, 12, 0, Math.PI * 2);
+      ctx.fill();
+
+      this.cache.set(key, canvas);
+      return canvas;
+    }
+
     // Translucent foliage layers
     const clusters = [
       { x: 20, y: 20, r: 18, c: '#166534' },
@@ -1031,6 +1219,26 @@ export class HDGraphics {
 
     const size = 64;
     const { canvas, ctx } = this.createCanvas(size, size);
+
+    const img = this.getImage('water');
+    if (img) {
+      ctx.drawImage(img, 0, 0, size, size);
+
+      // Animated caustic ripples overlay
+      ctx.strokeStyle = 'rgba(255, 255, 255, 0.35)';
+      ctx.lineWidth = 1.5;
+      const shift = (frame % 4) * 8;
+      for (let y = 10; y < size; y += 18) {
+        ctx.beginPath();
+        ctx.moveTo(0, y);
+        ctx.bezierCurveTo(16, y - 4 + Math.sin(shift) * 3, 32, y + 4, 48, y - 2);
+        ctx.lineTo(size, y + 2);
+        ctx.stroke();
+      }
+
+      this.cache.set(key, canvas);
+      return canvas;
+    }
 
     const grad = ctx.createLinearGradient(0, 0, size, size);
     grad.addColorStop(0, '#0284c7');

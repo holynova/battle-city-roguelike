@@ -53,31 +53,47 @@ export class UIOverlay {
   // Get comic-book illustration for upgrade card
   private getCardArtUrl(chipId: string): string {
     switch (chipId) {
+      case 'weapon_laser':
+      case 'laser_beam':
+      case 'railgun_laser':
+        return './assets/images/card_laser.jpg';
+      case 'weapon_cryo':
+      case 'cryo_shells':
+        return './assets/images/card_cryo.jpg';
+      case 'weapon_vortex':
+        return './assets/images/card_vortex.jpg';
+      case 'weapon_napalm':
+      case 'incendiary_rounds':
+        return './assets/images/card_napalm.jpg';
+      case 'artillery_barrage':
+      case 'mortar_siege':
+      case 'bouncing_rounds':
+      case 'explosive_shrapnel':
+        return './assets/images/card_artillery.jpg';
       case 'weapon_tesla':
       case 'tesla_coil':
-      case 'laser_beam':
-      case 'weapon_laser':
+      case 'tesla_overload':
         return './assets/images/card_tesla_coil.jpg';
+      case 'weapon_standard':
       case 'dual_barrel':
       case 'high_velocity':
       case 'rapid_loader':
-      case 'weapon_standard':
+      case 'turbo_engine':
+      case 'ramming_prow':
         return './assets/images/card_twin_barrel.jpg';
       case 'shield_generator':
       case 'reinforced_armor':
       case 'eagle_nano_shield':
+      case 'eagle_point_defense':
+      case 'hover_chassis':
+      case 'nanite_repair':
         return './assets/images/card_energy_shield.jpg';
       case 'vampiric_scavenger':
       case 'steel_breaker':
-      case 'weapon_vortex':
+      case 'scrap_collector':
         return './assets/images/card_vampiric_scavenger.jpg';
-      case 'weapon_napalm':
-      case 'artillery_barrage':
-      case 'bouncing_rounds':
-      case 'weapon_cryo':
-        return './assets/images/goliath_boss_portrait.jpg';
       default:
-        return './assets/images/slay_camp_rest.jpg';
+        return './assets/images/card_frame_epic.jpg';
     }
   }
 
@@ -912,8 +928,11 @@ export class UIOverlay {
         <div class="spire-map-sidebar">
           <div>
             <div class="spire-sidebar-heading">// TACTICAL BRIEFING DOSSIER</div>
+            <div class="spire-dossier-art-box" style="width: 100%; height: 140px; border-radius: 6px; border: 2px solid #8d6e40; overflow: hidden; margin-bottom: 12px; background: #000; box-shadow: inset 0 0 16px rgba(0, 0, 0, 0.9);">
+              <img id="dossier-art" src="./assets/images/battlefield_ground.jpg" style="width: 100%; height: 100%; object-fit: cover; display: block;" />
+            </div>
             <div class="spire-sidebar-title" id="dossier-title">${defaultPreviewNode ? defaultPreviewNode.nameZh : '选择战区'}</div>
-            <div style="display: inline-block; padding: 2px 8px; background: rgba(239, 68, 68, 0.2); border: 1px solid #ef4444; color: #ef4444; font-family: 'Share Tech Mono', monospace; font-size: 11px; margin-bottom: 12px;">
+            <div id="dossier-threat" style="display: inline-block; padding: 2px 8px; background: rgba(239, 68, 68, 0.2); border: 1px solid #ef4444; color: #ef4444; font-family: 'Share Tech Mono', monospace; font-size: 11px; margin-bottom: 12px;">
               THREAT LEVEL: HIGH
             </div>
             <div class="spire-sidebar-desc" id="dossier-desc">
@@ -921,7 +940,7 @@ export class UIOverlay {
             </div>
           </div>
           <div>
-            <div style="font-family: 'Share Tech Mono', monospace; font-size: 11px; color: #facc15; margin-bottom: 12px;">
+            <div id="dossier-loot" style="font-family: 'Share Tech Mono', monospace; font-size: 11px; color: #facc15; margin-bottom: 12px;">
               • 预计战利品: 180 ~ 260 零件
             </div>
             <button class="spire-skip-btn" id="btn-enter-spire-node" style="width: 100%; padding: 12px 0; background: linear-gradient(180deg, #991b1b 0%, #581010 100%); border-color: #f87171; color: #fff;" ${defaultPreviewNode ? '' : 'disabled'}>
@@ -945,7 +964,65 @@ export class UIOverlay {
       dossierDesc.textContent = node.descZh;
       btnEnter.disabled = !node.available;
       btnEnter.textContent = node.available ? '踏入战区 (PROCEED)' : '不可通行';
+
+      const dossierArt = box.querySelector('#dossier-art') as HTMLImageElement;
+      const dossierThreat = box.querySelector('#dossier-threat') as HTMLElement;
+      const dossierLoot = box.querySelector('#dossier-loot') as HTMLElement;
+
+      if (node.type === 'boss') {
+        if (dossierArt) dossierArt.src = './assets/images/goliath_boss_portrait.jpg';
+        if (dossierThreat) {
+          dossierThreat.textContent = 'THREAT LEVEL: APOCALYPTIC // BOSS';
+          dossierThreat.style.borderColor = '#ef4444';
+          dossierThreat.style.color = '#ef4444';
+        }
+        if (dossierLoot) dossierLoot.textContent = '• 预计战利品: 500+ 零件 & 战役通关勋章';
+      } else if (node.type === 'elite') {
+        if (dossierArt) dossierArt.src = './assets/images/commander_ignis_portrait.jpg';
+        if (dossierThreat) {
+          dossierThreat.textContent = 'THREAT LEVEL: EXTREME // ELITE COMMANDER';
+          dossierThreat.style.borderColor = '#f59e0b';
+          dossierThreat.style.color = '#f59e0b';
+        }
+        if (dossierLoot) dossierLoot.textContent = '• 预计战利品: 320 ~ 450 零件 & 稀有特种芯片';
+      } else if (node.type === 'shop') {
+        if (dossierArt) dossierArt.src = './assets/images/merchant_shopkeeper.jpg';
+        if (dossierThreat) {
+          dossierThreat.textContent = 'THREAT LEVEL: SECURE // BLACK MARKET';
+          dossierThreat.style.borderColor = '#facc15';
+          dossierThreat.style.color = '#facc15';
+        }
+        if (dossierLoot) dossierLoot.textContent = '• 黑市军火兑换 & 老兵机修站';
+      } else if (node.type === 'rest') {
+        if (dossierArt) dossierArt.src = './assets/images/slay_camp_rest.jpg';
+        if (dossierThreat) {
+          dossierThreat.textContent = 'THREAT LEVEL: SAFE // CAMPSITE';
+          dossierThreat.style.borderColor = '#4ade80';
+          dossierThreat.style.color = '#4ade80';
+        }
+        if (dossierLoot) dossierLoot.textContent = '• 装甲全面修复 或 战车主炮锻造';
+      } else if (node.type === 'event') {
+        if (dossierArt) dossierArt.src = './assets/images/event_derelict_tank.jpg';
+        if (dossierThreat) {
+          dossierThreat.textContent = 'THREAT LEVEL: UNKNOWN // ANOMALY';
+          dossierThreat.style.borderColor = '#c084fc';
+          dossierThreat.style.color = '#c084fc';
+        }
+        if (dossierLoot) dossierLoot.textContent = '• 遭遇未知战地实验体或秘密机密';
+      } else {
+        if (dossierArt) dossierArt.src = './assets/images/battlefield_ground.jpg';
+        if (dossierThreat) {
+          dossierThreat.textContent = 'THREAT LEVEL: HIGH // BATTLEZONE';
+          dossierThreat.style.borderColor = '#ef4444';
+          dossierThreat.style.color = '#ef4444';
+        }
+        if (dossierLoot) dossierLoot.textContent = '• 预计战利品: 180 ~ 260 零件';
+      }
     };
+
+    if (defaultPreviewNode) {
+      updateDossier(defaultPreviewNode);
+    }
 
     btnEnter.onclick = () => {
       if (selectedNode && selectedNode.available) {
