@@ -1,0 +1,276 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 440" width="100%" height="100%">
+  <title>Battle City: Rogue Bastion - Project Hero</title>
+  <defs>
+    <!-- Background Gradients -->
+    <linearGradient id="bgGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#0a0f18" />
+      <stop offset="50%" stop-color="#070a10" />
+      <stop offset="100%" stop-color="#030508" />
+    </linearGradient>
+    <radialGradient id="amberGlow" cx="15%" cy="30%" r="50%">
+      <stop offset="0%" stop-color="#ff9900" stop-opacity="0.18" />
+      <stop offset="100%" stop-color="#ff9900" stop-opacity="0" />
+    </radialGradient>
+    <radialGradient id="cyanGlow" cx="80%" cy="40%" r="60%">
+      <stop offset="0%" stop-color="#00e5ff" stop-opacity="0.16" />
+      <stop offset="100%" stop-color="#00e5ff" stop-opacity="0" />
+    </radialGradient>
+
+    <!-- Metallic & Accent Gradients -->
+    <linearGradient id="titleGold" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#ffaa00" />
+      <stop offset="50%" stop-color="#ff6b00" />
+      <stop offset="100%" stop-color="#ff9900" />
+    </linearGradient>
+    <linearGradient id="hullMetal" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#2a3848" />
+      <stop offset="50%" stop-color="#1b2430" />
+      <stop offset="100%" stop-color="#121822" />
+    </linearGradient>
+    <linearGradient id="armorPlate" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#3d4f63" />
+      <stop offset="100%" stop-color="#243140" />
+    </linearGradient>
+    <linearGradient id="laserBeam" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#00e5ff" stop-opacity="0.9" />
+      <stop offset="80%" stop-color="#00e5ff" stop-opacity="0.3" />
+      <stop offset="100%" stop-color="#00e5ff" stop-opacity="0" />
+    </linearGradient>
+    <linearGradient id="plasmaGlow" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#ff3300" stop-opacity="0.8" />
+      <stop offset="100%" stop-color="#ff9900" stop-opacity="0" />
+    </linearGradient>
+
+    <!-- Grid Pattern -->
+    <pattern id="tacticalGrid" width="40" height="40" patternUnits="userSpaceOnUse">
+      <path d="M 40 0 L 0 0 0 40" fill="none" stroke="#162436" stroke-width="0.8" stroke-opacity="0.5" />
+      <circle cx="0" cy="0" r="1.2" fill="#00e5ff" fill-opacity="0.3" />
+    </pattern>
+
+    <!-- Hazard Stripes Pattern -->
+    <pattern id="hazardStripe" width="20" height="20" patternTransform="rotate(45)" patternUnits="userSpaceOnUse">
+      <rect width="10" height="20" fill="#ff9900" fill-opacity="0.2" />
+      <rect x="10" width="10" height="20" fill="#000000" fill-opacity="0.2" />
+    </pattern>
+  </defs>
+
+  <!-- Canvas Base -->
+  <rect width="1200" height="440" rx="16" fill="url(#bgGradient)" stroke="#1a2736" stroke-width="1.5" />
+  <rect width="1200" height="440" fill="url(#tacticalGrid)" rx="16" />
+  <rect width="1200" height="440" fill="url(#amberGlow)" rx="16" />
+  <rect width="1200" height="440" fill="url(#cyanGlow)" rx="16" />
+
+  <!-- Outer HUD Corner Accents -->
+  <path d="M 24 44 L 24 24 L 44 24" fill="none" stroke="#ff9900" stroke-width="2.5" />
+  <path d="M 1176 44 L 1176 24 L 1156 24" fill="none" stroke="#00e5ff" stroke-width="2.5" />
+  <path d="M 24 396 L 24 416 L 44 416" fill="none" stroke="#00e5ff" stroke-width="2.5" />
+  <path d="M 1176 396 L 1176 416 L 1156 416" fill="none" stroke="#ff9900" stroke-width="2.5" />
+
+  <!-- Top Status Strip -->
+  <rect x="56" y="24" width="240" height="4" fill="url(#hazardStripe)" />
+  <text x="56" y="44" font-family="'SF Mono', Monaco, Consolas, monospace" font-size="11" font-weight="700" fill="#ffaa00" letter-spacing="2">SYS.VER: 1.2.0 // TACTICAL ROGUELIKE BASTION</text>
+
+  <!-- ==================== LEFT COLUMN: BRAND & STORY ==================== -->
+  <!-- Category Pill Badge -->
+  <g transform="translate(56, 68)">
+    <rect width="310" height="26" rx="13" fill="#15202e" stroke="#ff9900" stroke-width="1" stroke-opacity="0.6" />
+    <circle cx="14" cy="13" r="4" fill="#ff9900" />
+    <text x="26" y="17" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-size="11" font-weight="800" fill="#ffb833" letter-spacing="1.2">FC CLASSIC × MODERN ROGUELITE</text>
+  </g>
+
+  <!-- Big Title -->
+  <text x="56" y="142" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-size="52" font-weight="900" fill="#ffffff" letter-spacing="1.5">BATTLE CITY</text>
+  <text x="56" y="196" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-size="44" font-weight="900" fill="url(#titleGold)" letter-spacing="2">ROGUE BASTION</text>
+
+  <!-- Subtitle (Chinese Lore) -->
+  <text x="58" y="226" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'PingFang SC', sans-serif" font-size="16" font-weight="600" fill="#8aa2be" letter-spacing="4">钢铁誓约 · 重装肉鸽坦克 · 高清重制版</text>
+
+  <!-- Value Proposition Paragraph -->
+  <text x="58" y="260" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-size="14.5" fill="#cad5e2" font-weight="400">
+    经典红白机灵魂玩法重铸：双轴平滑瞄准、6大元素主炮升星进阶、
+  </text>
+  <text x="58" y="282" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-size="14.5" fill="#cad5e2" font-weight="400">
+    老鹰基地 2.0 防御改装与 16 层尖塔战役沙盘大地图。
+  </text>
+
+  <!-- Core Highlights Matrix -->
+  <g transform="translate(58, 308)">
+    <!-- Pill 1 -->
+    <rect x="0" y="0" width="150" height="30" rx="6" fill="#121b27" stroke="#253a52" stroke-width="1" />
+    <text x="10" y="19" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-size="12" font-weight="700" fill="#ffaa00">⚡ 6 大元素武器 Lv.5</text>
+
+    <!-- Pill 2 -->
+    <rect x="158" y="0" width="150" height="30" rx="6" fill="#121b27" stroke="#253a52" stroke-width="1" />
+    <text x="168" y="19" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-size="12" font-weight="700" fill="#00e5ff">🛡️ 老鹰基地能量盾</text>
+
+    <!-- Pill 3 -->
+    <rect x="316" y="0" width="150" height="30" rx="6" fill="#121b27" stroke="#253a52" stroke-width="1" />
+    <text x="326" y="19" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-size="12" font-weight="700" fill="#6fe3b0">🗺️ 16 层战役沙盘</text>
+  </g>
+
+  <!-- Tech Stack Metadata Strip -->
+  <g transform="translate(58, 362)">
+    <rect x="0" y="0" width="466" height="38" rx="8" fill="#0d141e" stroke="#1c2b3d" stroke-width="1" />
+    <text x="16" y="24" font-family="'SF Mono', Monaco, Consolas, monospace" font-size="12" font-weight="600" fill="#4d6b8c">ENGINE STACK:</text>
+    <text x="126" y="24" font-family="'SF Mono', Monaco, Consolas, monospace" font-size="12" font-weight="600" fill="#cad5e2">TypeScript</text>
+    <circle cx="218" cy="19" r="2.5" fill="#ff9900" />
+    <text x="232" y="24" font-family="'SF Mono', Monaco, Consolas, monospace" font-size="12" font-weight="600" fill="#cad5e2">High-DPI Canvas</text>
+    <circle cx="370" cy="19" r="2.5" fill="#00e5ff" />
+    <text x="384" y="24" font-family="'SF Mono', Monaco, Consolas, monospace" font-size="12" font-weight="600" fill="#cad5e2">Web Audio</text>
+  </g>
+
+
+  <!-- ==================== RIGHT COLUMN: TACTICAL HUD & VEHICLE ==================== -->
+  <!-- Tactical Console Frame -->
+  <g transform="translate(560, 40)">
+    <!-- Base Panel -->
+    <rect width="584" height="360" rx="14" fill="#0c131d" fill-opacity="0.9" stroke="#1d2e42" stroke-width="1.5" />
+    
+    <!-- Console Header Bar -->
+    <rect width="584" height="34" rx="14" fill="#141f2d" />
+    <rect y="24" width="584" height="10" fill="#141f2d" />
+    <line x1="0" y1="34" x2="584" y2="34" stroke="#25384e" stroke-width="1" />
+    
+    <circle cx="20" cy="17" r="4" fill="#00e5ff" />
+    <text x="32" y="21" font-family="'SF Mono', Monaco, Consolas, monospace" font-size="11" font-weight="700" fill="#7ba3cc" letter-spacing="1">RADAR FIRE-CONTROL // BATTLE HUD</text>
+    <rect x="440" y="8" width="128" height="18" rx="4" fill="#09202a" stroke="#00e5ff" stroke-width="0.8" />
+    <text x="450" y="21" font-family="'SF Mono', Monaco, Consolas, monospace" font-size="10" font-weight="700" fill="#00e5ff">LINK: 60 FPS HD</text>
+
+    <!-- Radar Coordinate Grid Area -->
+    <circle cx="280" cy="180" r="140" fill="none" stroke="#192a3d" stroke-width="1" stroke-dasharray="4 4" />
+    <circle cx="280" cy="180" r="95" fill="none" stroke="#192a3d" stroke-width="1" stroke-dasharray="2 4" />
+    <circle cx="280" cy="180" r="50" fill="none" stroke="#223952" stroke-width="1" />
+    <line x1="140" y1="180" x2="420" y2="180" stroke="#1a2d42" stroke-width="1" stroke-dasharray="3 3" />
+    <line x1="280" y1="40" x2="280" y2="320" stroke="#1a2d42" stroke-width="1" stroke-dasharray="3 3" />
+
+    <!-- Protective Shield Energy Aura around Tank -->
+    <circle cx="270" cy="185" r="88" fill="none" stroke="#00e5ff" stroke-width="1.8" stroke-opacity="0.7" stroke-dasharray="14 8 4 8" />
+    <circle cx="270" cy="185" r="94" fill="none" stroke="#00e5ff" stroke-width="0.8" stroke-opacity="0.3" />
+
+    <!-- Targeting Laser Vector Beam -->
+    <line x1="270" y1="135" x2="490" y2="90" stroke="url(#laserBeam)" stroke-width="3" />
+    <circle cx="490" cy="90" r="12" fill="none" stroke="#ff3b30" stroke-width="1.5" stroke-dasharray="4 2" />
+    <circle cx="490" cy="90" r="3" fill="#ff3b30" />
+    <text x="445" y="72" font-family="'SF Mono', Monaco, Consolas, monospace" font-size="9" font-weight="700" fill="#ff4d4d">LOCKED: BOSS ELITE</text>
+
+    <!-- ==================== TACTICAL MBT VEHICLE (DETAILED VECTOR) ==================== -->
+    <g transform="translate(270, 185) rotate(-12)">
+      <!-- Left Tread -->
+      <rect x="-65" y="-55" width="26" height="110" rx="5" fill="#1b242f" stroke="#36495d" stroke-width="1.5" />
+      <!-- Tread Segments & Sprockets -->
+      <line x1="-65" y1="-35" x2="-39" y2="-35" stroke="#36495d" stroke-width="1.2" />
+      <line x1="-65" y1="-15" x2="-39" y2="-15" stroke="#36495d" stroke-width="1.2" />
+      <line x1="-65" y1="5" x2="-39" y2="5" stroke="#36495d" stroke-width="1.2" />
+      <line x1="-65" y1="25" x2="-39" y2="25" stroke="#36495d" stroke-width="1.2" />
+      <line x1="-65" y1="45" x2="-39" y2="45" stroke="#36495d" stroke-width="1.2" />
+      <circle cx="-52" cy="-42" r="5" fill="#293747" />
+      <circle cx="-52" cy="42" r="5" fill="#293747" />
+
+      <!-- Right Tread -->
+      <rect x="39" y="-55" width="26" height="110" rx="5" fill="#1b242f" stroke="#36495d" stroke-width="1.5" />
+      <!-- Right Tread Segments -->
+      <line x1="39" y1="-35" x2="65" y2="-35" stroke="#36495d" stroke-width="1.2" />
+      <line x1="39" y1="-15" x2="65" y2="-15" stroke="#36495d" stroke-width="1.2" />
+      <line x1="39" y1="5" x2="65" y2="5" stroke="#36495d" stroke-width="1.2" />
+      <line x1="39" y1="25" x2="65" y2="25" stroke="#36495d" stroke-width="1.2" />
+      <line x1="39" y1="45" x2="65" y2="45" stroke="#36495d" stroke-width="1.2" />
+      <circle cx="52" cy="-42" r="5" fill="#293747" />
+      <circle cx="52" cy="42" r="5" fill="#293747" />
+
+      <!-- Main Chassis / Hull -->
+      <polygon points="-42,-48 42,-48 38,48 -38,48" fill="url(#hullMetal)" stroke="#48627d" stroke-width="1.5" />
+      <!-- Sloped Armor Plates -->
+      <polygon points="-36,-42 36,-42 32,-15 -32,-15" fill="url(#armorPlate)" />
+      <polygon points="-32,0 32,0 28,42 -28,42" fill="#18222d" />
+      <!-- Hazard Markings on Rear -->
+      <rect x="-24" y="38" width="48" height="6" fill="url(#hazardStripe)" />
+
+      <!-- Front Heavy Ramming Prow -->
+      <polygon points="-34,-52 0,-62 34,-52 28,-46 -28,-46" fill="#ff9900" fill-opacity="0.85" stroke="#ffe066" stroke-width="1" />
+
+      <!-- Independent Rotating Turret (Aimed toward top-right) -->
+      <g transform="rotate(28)">
+        <!-- Twin Heavy Cannon Barrels -->
+        <!-- Barrel 1 -->
+        <rect x="-9" y="-88" width="6" height="58" rx="2" fill="#2a394a" stroke="#48637e" stroke-width="1.2" />
+        <rect x="-11" y="-94" width="10" height="9" rx="1.5" fill="#ffaa00" />
+        <!-- Muzzle Flash/Gas Vents -->
+        <line x1="-12" y1="-90" x2="-6" y2="-90" stroke="#070b10" stroke-width="1" />
+
+        <!-- Barrel 2 -->
+        <rect x="3" y="-88" width="6" height="58" rx="2" fill="#2a394a" stroke="#48637e" stroke-width="1.2" />
+        <rect x="1" y="-94" width="10" height="9" rx="1.5" fill="#ffaa00" />
+        <!-- Muzzle Flash/Gas Vents -->
+        <line x1="0" y1="-90" x2="6" y2="-90" stroke="#070b10" stroke-width="1" />
+
+        <!-- Turret Body -->
+        <polygon points="-26,-30 26,-30 20,24 -20,24" fill="#223040" stroke="#5d7b9d" stroke-width="1.5" />
+        <!-- Turret Mantlet Armor -->
+        <polygon points="-20,-34 20,-34 16,-22 -16,-22" fill="#324458" />
+
+        <!-- Central Reactor Core / Energy Hatch -->
+        <circle cx="0" cy="-2" r="13" fill="#0d1822" stroke="#00e5ff" stroke-width="2" />
+        <circle cx="0" cy="-2" r="7" fill="#00e5ff" fill-opacity="0.8" />
+        <circle cx="0" cy="-2" r="3" fill="#ffffff" />
+      </g>
+    </g>
+
+    <!-- HUD Overlay Card 1: Eagle Bastion Status (Bottom Left) -->
+    <g transform="translate(18, 230)">
+      <rect width="186" height="110" rx="8" fill="#091018" fill-opacity="0.9" stroke="#1d3044" stroke-width="1" />
+      <text x="12" y="20" font-family="'SF Mono', Monaco, Consolas, monospace" font-size="10" font-weight="700" fill="#ffaa00">EAGLE BASTION 2.0</text>
+      <circle cx="168" cy="16" r="3.5" fill="#6fe3b0" />
+
+      <!-- HP Bar -->
+      <text x="12" y="42" font-family="-apple-system, BlinkMacSystemFont, sans-serif" font-size="9" font-weight="600" fill="#8aa2be">FORT HULL</text>
+      <rect x="70" y="34" width="104" height="8" rx="3" fill="#15212d" />
+      <rect x="70" y="34" width="104" height="8" rx="3" fill="#6fe3b0" />
+
+      <!-- Shield Bar -->
+      <text x="12" y="62" font-family="-apple-system, BlinkMacSystemFont, sans-serif" font-size="9" font-weight="600" fill="#8aa2be">NANO SHIELD</text>
+      <rect x="70" y="54" width="104" height="8" rx="3" fill="#15212d" />
+      <rect x="70" y="54" width="86" height="8" rx="3" fill="#00e5ff" />
+
+      <!-- Defense Spec -->
+      <rect x="12" y="74" width="162" height="24" rx="4" fill="#111d28" stroke="#1b3147" stroke-width="0.8" />
+      <text x="18" y="90" font-family="'SF Mono', Monaco, Consolas, monospace" font-size="9" font-weight="600" fill="#cad5e2">AUTO GATLING: 360° ACT</text>
+    </g>
+
+    <!-- HUD Overlay Card 2: 6 Elemental Weapons Matrix (Bottom Right) -->
+    <g transform="translate(420, 210)">
+      <rect width="148" height="130" rx="8" fill="#091018" fill-opacity="0.9" stroke="#1d3044" stroke-width="1" />
+      <text x="12" y="20" font-family="'SF Mono', Monaco, Consolas, monospace" font-size="10" font-weight="700" fill="#00e5ff">WEAPON FUSION</text>
+
+      <!-- 6 Slot Icons -->
+      <!-- Slot 1 Kinetic -->
+      <rect x="12" y="30" width="38" height="40" rx="4" fill="#152230" stroke="#ffaa00" stroke-width="1" />
+      <text x="21" y="48" font-size="13">⚔️</text>
+      <text x="21" y="64" font-family="'SF Mono', Monaco, Consolas, monospace" font-size="8" font-weight="700" fill="#ffaa00">Lv.5</text>
+
+      <!-- Slot 2 Laser -->
+      <rect x="55" y="30" width="38" height="40" rx="4" fill="#152230" stroke="#00e5ff" stroke-width="1" />
+      <text x="64" y="48" font-size="13">💫</text>
+      <text x="64" y="64" font-family="'SF Mono', Monaco, Consolas, monospace" font-size="8" font-weight="700" fill="#00e5ff">Lv.4</text>
+
+      <!-- Slot 3 Tesla -->
+      <rect x="98" y="30" width="38" height="40" rx="4" fill="#152230" stroke="#6fe3b0" stroke-width="1" />
+      <text x="107" y="48" font-size="13">⚡</text>
+      <text x="107" y="64" font-family="'SF Mono', Monaco, Consolas, monospace" font-size="8" font-weight="700" fill="#6fe3b0">Lv.3</text>
+
+      <!-- Slot 4 Vortex -->
+      <rect x="12" y="78" width="38" height="40" rx="4" fill="#111c26" stroke="#253a50" stroke-width="0.8" />
+      <text x="21" y="96" font-size="13">🌀</text>
+      <text x="21" y="112" font-family="'SF Mono', Monaco, Consolas, monospace" font-size="8" font-weight="700" fill="#8aa2be">Lv.2</text>
+
+      <!-- Slot 5 Napalm -->
+      <rect x="55" y="78" width="38" height="40" rx="4" fill="#111c26" stroke="#253a50" stroke-width="0.8" />
+      <text x="64" y="96" font-size="13">🔥</text>
+      <text x="64" y="112" font-family="'SF Mono', Monaco, Consolas, monospace" font-size="8" font-weight="700" fill="#8aa2be">Lv.2</text>
+
+      <!-- Slot 6 Cryo -->
+      <rect x="98" y="78" width="38" height="40" rx="4" fill="#111c26" stroke="#253a50" stroke-width="0.8" />
+      <text x="107" y="96" font-size="13">❄️</text>
+      <text x="107" y="112" font-family="'SF Mono', Monaco, Consolas, monospace" font-size="8" font-weight="700" fill="#8aa2be">Lv.1</text>
+    </g>
+  </g>
+</svg>
