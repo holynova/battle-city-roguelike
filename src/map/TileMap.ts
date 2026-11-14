@@ -82,7 +82,7 @@ export class TileMap {
     if (nodeType === 'boss') {
       this.buildGoliathColosseum();
       this.currentArchetype = 'GOLIATH_COLOSSEUM';
-      this.currentThemeName = '歌利亚决斗场 (GOLIATH COLOSSEUM)';
+      this.currentThemeName = '歌利亚决斗场';
       return;
     }
 
@@ -91,15 +91,15 @@ export class TileMap {
       if (eliteVariant === 0) {
         this.buildIronFortress();
         this.currentArchetype = 'IRON_FORTRESS';
-        this.currentThemeName = '钢铁要塞碉堡 (IRON FORTRESS)';
+        this.currentThemeName = '钢铁要塞碉堡';
       } else if (eliteVariant === 1) {
         this.buildTwinOutposts();
         this.currentArchetype = 'TWIN_OUTPOSTS';
-        this.currentThemeName = '双子前哨基地 (TWIN OUTPOSTS)';
+        this.currentThemeName = '双子前哨基地';
       } else {
         this.buildCheckeredPillars();
         this.currentArchetype = 'CHECKERED_PILLARS';
-        this.currentThemeName = '列柱方阵要塞 (COLUMNS BASTION)';
+        this.currentThemeName = '列柱方阵要塞';
       }
       return;
     }
@@ -110,32 +110,32 @@ export class TileMap {
       case 0:
         this.buildRiverCrossing();
         this.currentArchetype = 'RIVER_CROSSING';
-        this.currentThemeName = '莱茵水堑阻击战 (RIVER CROSSING)';
+        this.currentThemeName = '莱茵水堑阻击战';
         break;
       case 1:
         this.buildLabyrinthRuins();
         this.currentArchetype = 'LABYRINTH_RUINS';
-        this.currentThemeName = '巷战废墟迷宫 (LABYRINTH)';
+        this.currentThemeName = '巷战废墟迷宫';
         break;
       case 2:
         this.buildCrossroadAmbush();
         this.currentArchetype = 'CROSSROAD_AMBUSH';
-        this.currentThemeName = '十字街区遭遇战 (CROSSROAD)';
+        this.currentThemeName = '十字街区遭遇战';
         break;
       case 3:
         this.buildJungleHunt();
         this.currentArchetype = 'JUNGLE_HUNT';
-        this.currentThemeName = '热带丛林伏击战 (JUNGLE HUNT)';
+        this.currentThemeName = '热带丛林伏击战';
         break;
       case 4:
         this.buildGlacialIcefield();
         this.currentArchetype = 'GLACIAL_ICEFIELD';
-        this.currentThemeName = '极地霜冻冰原 (GLACIAL ICEFIELD)';
+        this.currentThemeName = '极地霜冻冰原';
         break;
       case 5:
         this.buildTrenchWarfare();
         this.currentArchetype = 'TRENCH_WARFARE';
-        this.currentThemeName = '纵深战壕防线 (TRENCH WARFARE)';
+        this.currentThemeName = '纵深战壕防线';
         break;
     }
   }

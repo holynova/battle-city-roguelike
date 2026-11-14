@@ -64,7 +64,7 @@ export class HUD {
       const bossBarW = Math.min(520, width - 40);
       const bossBarH = 52;
       const bx = (width - bossBarW) / 2;
-      const by = 12;
+      const by = 52;
 
       ctx.save();
       ctx.fillStyle = 'rgba(15, 23, 42, 0.88)';
@@ -78,14 +78,14 @@ export class HUD {
       ctx.stroke();
 
       // Title & Phase
-      ctx.font = 'bold 13px "Chakra Petch", system-ui, sans-serif';
+      ctx.font = 'bold 14px "Chakra Petch", system-ui, sans-serif';
       ctx.fillStyle = phaseColor;
       ctx.textAlign = 'left';
       ctx.fillText(`👑 陆上巡洋舰「歌利亚」MK-IV`, bx + 16, by + 20);
 
       ctx.textAlign = 'right';
-      ctx.font = 'bold 11px "Share Tech Mono", monospace';
-      ctx.fillText(`[ 阶 段  ${bossEnemy.phase} / 3 ]`, bx + bossBarW - 16, by + 20);
+      ctx.font = 'bold 12px "Share Tech Mono", monospace';
+      ctx.fillText(`[ 阶段 ${bossEnemy.phase} / 3 ]`, bx + bossBarW - 16, by + 20);
 
       // HP Bar
       const barInnerW = bossBarW - 32;
@@ -118,7 +118,7 @@ export class HUD {
       const eliteBarW = Math.min(480, width - 40);
       const eliteBarH = 48;
       const ex = (width - eliteBarW) / 2;
-      const ey = 12;
+      const ey = 52;
 
       ctx.save();
       ctx.fillStyle = 'rgba(15, 23, 42, 0.88)';
@@ -130,13 +130,13 @@ export class HUD {
       ctx.lineWidth = 2;
       ctx.stroke();
 
-      ctx.font = 'bold 13px "Chakra Petch", system-ui, sans-serif';
+      ctx.font = 'bold 14px "Chakra Petch", system-ui, sans-serif';
       ctx.fillStyle = eliteEnemy.color;
       ctx.textAlign = 'left';
-      ctx.fillText(`☠ ${eliteEnemy.titleZh} · ${eliteEnemy.nameZh}`, ex + 16, ey + 18);
+      ctx.fillText(`☠ ${eliteEnemy.titleZh} — ${eliteEnemy.nameZh}`, ex + 16, ey + 18);
 
       ctx.textAlign = 'right';
-      ctx.font = 'bold 11px "Share Tech Mono", monospace';
+      ctx.font = 'bold 12px "Share Tech Mono", monospace';
       ctx.fillText(`${Math.ceil(eliteEnemy.hp)} / ${eliteEnemy.maxHp} HP`, ex + eliteBarW - 16, ey + 18);
 
       const barInnerW = eliteBarW - 32;
@@ -164,7 +164,7 @@ export class HUD {
       const centerPodW = Math.min(380, width - 40);
       const centerPodH = 46;
       const centerPodX = (width - centerPodW) / 2;
-      const centerPodY = 12;
+      const centerPodY = 52;
 
       ctx.save();
       ctx.fillStyle = 'rgba(15, 23, 42, 0.72)';
@@ -178,11 +178,11 @@ export class HUD {
       ctx.textAlign = 'center';
       ctx.fillStyle = '#f8fafc';
       ctx.font = 'bold 14px "Chakra Petch", system-ui, sans-serif';
-      ctx.fillText(`敌军剩余装甲: ${enemiesRemaining} 机`, width / 2, centerPodY + 20);
+      ctx.fillText(`剩余敌军：${enemiesRemaining} 机`, width / 2, centerPodY + 20);
 
       ctx.fillStyle = '#38bdf8';
-      ctx.font = 'bold 11px "Share Tech Mono", monospace';
-      const sectorText = themeName ? `⬡ ${themeName} // FLOOR ${currentFloor + 1} / 16 ⬡` : `FLOOR ${currentFloor + 1} / 16`;
+      ctx.font = 'bold 12px "Share Tech Mono", monospace';
+      const sectorText = themeName ? `⬡ ${themeName} // 第 ${currentFloor + 1} 层，共 16 层 ⬡` : `第 ${currentFloor + 1} 层 / 共 16 层`;
       ctx.fillText(sectorText, width / 2, centerPodY + 36);
       ctx.restore();
     }
@@ -191,9 +191,9 @@ export class HUD {
     // 2. TOP LEFT: TANK TELEMETRY POD (Hull, Shield, Tactical Dash)
     // -------------------------------------------------------------
     const leftPodW = 215;
-    const leftPodH = 92;
+    const leftPodH = 108;
     const leftPodX = 18;
-    const leftPodY = 12;
+    const leftPodY = 52;
 
     ctx.save();
     ctx.fillStyle = 'rgba(15, 23, 42, 0.75)';
@@ -210,7 +210,7 @@ export class HUD {
     ctx.font = 'bold 10px "Share Tech Mono", monospace';
     ctx.fillStyle = '#94a3b8';
     ctx.textAlign = 'left';
-    ctx.fillText('HULL ARMOR', leftPodX + 12, leftPodY + 18);
+    ctx.fillText('车体装甲', leftPodX + 12, leftPodY + 18);
 
     ctx.textAlign = 'right';
     ctx.fillStyle = hpColor;
@@ -231,7 +231,7 @@ export class HUD {
     ctx.font = 'bold 10px "Share Tech Mono", monospace';
     ctx.fillStyle = '#38bdf8';
     ctx.textAlign = 'left';
-    ctx.fillText('SHIELD CORE', leftPodX + 12, leftPodY + 44);
+    ctx.fillText('护盾核心', leftPodX + 12, leftPodY + 44);
 
     ctx.textAlign = 'right';
     const shieldPct = player.maxShield > 0 ? Math.max(0, player.shield / player.maxShield) : 0;
@@ -260,6 +260,13 @@ export class HUD {
       ctx.fillStyle = '#f59e0b';
       ctx.fillText(`⚡ 闪避充能中 (${Math.round(pct * 100)}%)`, leftPodX + 12, leftPodY + 76);
     }
+
+    // Main cannon star level (3 stars = shells break steel walls)
+    ctx.textAlign = 'left';
+    ctx.font = 'bold 10px "Share Tech Mono", monospace';
+    const stars = playerInventory.starsCollected;
+    ctx.fillStyle = stars >= 3 ? '#facc15' : '#94a3b8';
+    ctx.fillText(`★ 主炮星级：${stars} / 3`, leftPodX + 12, leftPodY + 92);
     ctx.restore();
 
     // -------------------------------------------------------------
@@ -268,7 +275,7 @@ export class HUD {
     const rightPodW = 205;
     const rightPodH = 92;
     const rightPodX = width - rightPodW - 18;
-    const rightPodY = 12;
+    const rightPodY = 52;
 
     ctx.save();
     ctx.fillStyle = 'rgba(15, 23, 42, 0.75)';
@@ -285,7 +292,7 @@ export class HUD {
     ctx.font = 'bold 10px "Share Tech Mono", monospace';
     ctx.fillStyle = '#94a3b8';
     ctx.textAlign = 'left';
-    ctx.fillText('EAGLE BASTION', rightPodX + 12, rightPodY + 18);
+    ctx.fillText('老鹰要塞', rightPodX + 12, rightPodY + 18);
 
     ctx.textAlign = 'right';
     ctx.fillStyle = baseColor;
@@ -305,16 +312,16 @@ export class HUD {
     ctx.textAlign = 'left';
     ctx.font = 'bold 12px "Share Tech Mono", monospace';
     ctx.fillStyle = '#facc15';
-    ctx.fillText(`⚙ ${playerInventory.scraps} 废料零件`, rightPodX + 12, rightPodY + 50);
+    ctx.fillText(`⚙ ${playerInventory.scraps} 零件`, rightPodX + 12, rightPodY + 50);
 
     // Auto-Aim Status Badge
     ctx.font = 'bold 10px "Share Tech Mono", monospace';
     if (autoAim) {
       ctx.fillStyle = '#22c55e';
-      ctx.fillText('🎯 自动瞄准开火: 开启 (T)', rightPodX + 12, rightPodY + 76);
+      ctx.fillText('🎯 自动瞄准：开 (T)', rightPodX + 12, rightPodY + 76);
     } else {
       ctx.fillStyle = '#94a3b8';
-      ctx.fillText('🎯 手动瞄准开火: 开启 (T)', rightPodX + 12, rightPodY + 76);
+      ctx.fillText('🎯 自动瞄准：关 (T)', rightPodX + 12, rightPodY + 76);
     }
     ctx.restore();
 
@@ -371,7 +378,7 @@ export class HUD {
 
       if (isUnlocked) {
         // Hotkey badge
-        ctx.font = 'bold 9px "Share Tech Mono", monospace';
+        ctx.font = 'bold 10px "Share Tech Mono", monospace';
         ctx.fillStyle = isSelected ? '#ffffff' : '#94a3b8';
         ctx.textAlign = 'left';
         ctx.fillText(`[${idx + 1}]`, slotX + 5, dockY + 12);
@@ -379,7 +386,7 @@ export class HUD {
         // Stacking Upgrade Level Badge (e.g. LV.1 .. LV.5)
         ctx.textAlign = 'right';
         ctx.fillStyle = level >= 3 ? '#facc15' : '#38bdf8';
-        ctx.font = 'bold 9px "Share Tech Mono", monospace';
+        ctx.font = 'bold 10px "Share Tech Mono", monospace';
         ctx.fillText(`Lv.${level}`, slotX + slotW - 5, dockY + 12);
 
         // Weapon Icon
@@ -393,7 +400,7 @@ export class HUD {
         ctx.fillText(wInfo.nameZh.slice(0, 4), slotX + slotW / 2, dockY + 47);
       } else {
         // Locked Weapon Display
-        ctx.font = 'bold 9px "Share Tech Mono", monospace';
+        ctx.font = 'bold 10px "Share Tech Mono", monospace';
         ctx.fillStyle = '#475569';
         ctx.textAlign = 'left';
         ctx.fillText(`[${idx + 1}]`, slotX + 5, dockY + 12);
@@ -402,7 +409,7 @@ export class HUD {
         ctx.textAlign = 'center';
         ctx.fillText('🔒', slotX + slotW / 2, dockY + 29);
 
-        ctx.font = 'bold 9px "Chakra Petch", system-ui, sans-serif';
+        ctx.font = 'bold 10px "Chakra Petch", system-ui, sans-serif';
         ctx.fillStyle = '#64748b';
         ctx.fillText('3选1解锁', slotX + slotW / 2, dockY + 47);
       }

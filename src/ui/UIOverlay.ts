@@ -2,15 +2,15 @@
  * Slay the Spire Inspired Tactical Roguelike Game UI
  * Fully incorporates authentic Slay the Spire aesthetics:
  * - High-Resolution Comic Book Dieselpunk Game Artworks
- * - Slay the Spire Card Anatomy: Energy orb, title ribbon, framed artwork, card type badge, parchment rules box with keyword highlights
+ * - Slay the Spire Card Anatomy: title ribbon, framed artwork, card type badge, parchment rules box with keyword highlights
  * - Slay the Spire War Map: Weathered parchment background, ascending floor paths with ink dashes, authentic map symbols
  * - Slay the Spire Shopkeeper: Merchant portrait with dialogue bubble, card shelves and relic rows with price tags
- * - Slay the Spire Campfire: Underground bunker campfire art with [ 休息 (REST) ] & [ 锻造 (SMITH) ] decision tablets
+ * - Slay the Spire Campfire: Underground bunker campfire art with [ 休息 ] & [ 锻造 ] decision tablets
  * - Slay the Spire Event: Illustrated storybook modal with narrative choices
  * - Slay the Spire Victory/Defeat: "VICTORY ACHIEVED" & "DEFEAT / THE RUN HAS ENDED" artwork screens
  */
 
-import { UpgradeChip, getRarityColor, ALL_UPGRADES } from '../roguelite/Upgrades';
+import { UpgradeChip, getRarityColor, ALL_UPGRADES, UNIMPLEMENTED_CHIPS } from '../roguelite/Upgrades';
 import { playerInventory } from '../roguelite/Inventory';
 import { campaignMap, MapNode } from '../roguelite/CampaignMap';
 import { sounds } from '../audio/SoundEffects';
@@ -42,6 +42,17 @@ export class UIOverlay {
       });
       btn.addEventListener('mouseenter', () => sounds.playUiHover());
     }
+  }
+
+  private makeKeyboardActivatable(el: HTMLElement) {
+    el.setAttribute('tabindex', '0');
+    el.setAttribute('role', 'button');
+    el.addEventListener('keydown', (e: KeyboardEvent) => {
+      if (e.key === 'Enter' || e.key === ' ') {
+        e.preventDefault();
+        el.click();
+      }
+    });
   }
 
   private attachAudioFeedback(root: HTMLElement) {
@@ -97,18 +108,18 @@ export class UIOverlay {
     }
   }
 
-  private getCardTypeInfo(chip: UpgradeChip): { typeZh: string; cost: number; color: string } {
+  private getCardTypeInfo(chip: UpgradeChip): { typeZh: string; color: string } {
     const attackIds = ['high_velocity', 'rapid_loader', 'bouncing_rounds', 'dual_barrel', 'explosive_shrapnel', 'laser_beam', 'artillery_barrage'];
     const powerIds = ['reinforced_armor', 'scrap_collector', 'nanite_repair', 'vampiric_scavenger', 'eagle_point_defense', 'eagle_nano_shield', 'steel_breaker'];
 
     if (chip.id.startsWith('weapon_')) {
-      return { typeZh: '核心主炮 (WEAPON)', cost: 2, color: '#f59e0b' };
+      return { typeZh: '核心主炮', color: '#f59e0b' };
     } else if (attackIds.includes(chip.id)) {
-      return { typeZh: '攻击模块 (ATTACK)', cost: 1, color: '#ef4444' };
+      return { typeZh: '攻击模块', color: '#ef4444' };
     } else if (powerIds.includes(chip.id)) {
-      return { typeZh: '核心能力 (POWER)', cost: 2, color: '#a855f7' };
+      return { typeZh: '核心能力', color: '#a855f7' };
     } else {
-      return { typeZh: '战术技能 (SKILL)', cost: 1, color: '#38bdf8' };
+      return { typeZh: '战术技能', color: '#38bdf8' };
     }
   }
 
@@ -134,6 +145,10 @@ export class UIOverlay {
     style.id = 'slay-spire-styles';
     style.textContent = `
       #ui-overlay {
+        --fs-s: 11px;
+        --fs-m: 13px;
+        --fs-l: 15px;
+        --fs-xl: clamp(24px, 4vw, 38px);
         position: absolute;
         inset: 0;
         pointer-events: none;
@@ -157,6 +172,7 @@ export class UIOverlay {
         pointer-events: auto;
         animation: spireFadeIn 0.22s ease-out;
         padding: 12px;
+        overflow-y: auto;
       }
       @keyframes spireFadeIn {
         from { opacity: 0; transform: scale(0.98); }
@@ -167,6 +183,8 @@ export class UIOverlay {
       .spire-top-bar {
         width: 100%;
         max-width: 960px;
+        flex-wrap: wrap;
+        gap: 8px;
         background: linear-gradient(180deg, #2b1f14 0%, #17110b 100%);
         border: 2px solid #8d6e40;
         border-radius: 6px;
@@ -182,12 +200,13 @@ export class UIOverlay {
         display: flex;
         align-items: center;
         gap: 18px;
+        flex-wrap: wrap;
       }
       .spire-stat-pill {
         display: flex;
         align-items: center;
         gap: 6px;
-        font-size: 14px;
+        font-size: var(--fs-l);
         font-weight: 700;
       }
       .spire-stat-pill.hp {
@@ -198,7 +217,7 @@ export class UIOverlay {
       }
       .spire-stat-pill.act {
         color: #e2d7be;
-        font-size: 13px;
+        font-size: var(--fs-m);
         font-family: 'Chakra Petch', sans-serif;
       }
 
@@ -207,7 +226,7 @@ export class UIOverlay {
       ----------------------------------------------------------- */
       .spire-draft-title {
         font-family: 'Chakra Petch', serif;
-        font-size: 28px;
+        font-size: var(--fs-xl);
         font-weight: 800;
         color: #facc15;
         letter-spacing: 2px;
@@ -216,7 +235,7 @@ export class UIOverlay {
         text-align: center;
       }
       .spire-draft-subtitle {
-        font-size: 13px;
+        font-size: var(--fs-m);
         color: #c7b89d;
         font-family: 'Share Tech Mono', monospace;
         letter-spacing: 1px;
@@ -257,26 +276,6 @@ export class UIOverlay {
         border-color: #ffd700;
         box-shadow: 0 25px 60px rgba(0, 0, 0, 0.95), 0 0 40px var(--card-glow, rgba(255, 215, 0, 0.6));
       }
-      /* Energy / Scrap Orb */
-      .spire-energy-orb {
-        position: absolute;
-        top: -12px;
-        left: -12px;
-        width: 44px;
-        height: 44px;
-        border-radius: 50%;
-        background: radial-gradient(circle at 35% 35%, #0284c7 0%, #034875 70%, #011b33 100%);
-        border: 2px solid #facc15;
-        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.8), 0 0 14px rgba(56, 189, 248, 0.8);
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-family: 'Chakra Petch', sans-serif;
-        font-weight: 800;
-        font-size: 20px;
-        color: #ffffff;
-        z-index: 5;
-      }
       /* Title Ribbon */
       .spire-card-title {
         width: 100%;
@@ -284,7 +283,7 @@ export class UIOverlay {
         border-top: 1px solid #8d6e40;
         border-bottom: 1px solid #8d6e40;
         padding: 5px 0;
-        font-size: 16px;
+        font-size: var(--fs-l);
         font-weight: 700;
         color: #fff9ea;
         letter-spacing: 1px;
@@ -313,12 +312,11 @@ export class UIOverlay {
       /* Type Bar */
       .spire-card-type-bar {
         font-family: 'Share Tech Mono', monospace;
-        font-size: 11px;
+        font-size: var(--fs-s);
         font-weight: 700;
         color: #facc15;
         letter-spacing: 1.5px;
         margin-bottom: 8px;
-        text-transform: uppercase;
       }
       /* Rules Parchment Box */
       .spire-card-desc-box {
@@ -328,7 +326,7 @@ export class UIOverlay {
         border: 1px solid #4a3824;
         border-radius: 6px;
         padding: 10px 12px;
-        font-size: 12.5px;
+        font-size: var(--fs-m);
         color: #e2d7be;
         line-height: 1.6;
         text-align: center;
@@ -357,7 +355,7 @@ export class UIOverlay {
         border-radius: 4px;
         color: #e2d7be;
         font-family: 'Chakra Petch', sans-serif;
-        font-size: 15px;
+        font-size: var(--fs-l);
         font-weight: 700;
         letter-spacing: 2px;
         padding: 10px 36px;
@@ -370,6 +368,16 @@ export class UIOverlay {
         border-color: #ffd700;
         color: #ffffff;
         box-shadow: 0 8px 24px rgba(255, 215, 0, 0.3);
+      }
+      .spire-skip-btn:disabled {
+        opacity: 0.4;
+        cursor: not-allowed;
+        box-shadow: none;
+      }
+      .spire-card:focus-visible, .spire-tablet:focus-visible, .spire-event-choice:focus-visible,
+      .spire-map-node:focus-visible, .spire-skip-btn:focus-visible {
+        outline: 2px solid #ffd700;
+        outline-offset: 2px;
       }
 
       /* -----------------------------------------------------------
@@ -411,6 +419,25 @@ export class UIOverlay {
         background: #8d6e40;
         border-radius: 4px;
       }
+      @media (max-width: 800px) {
+        .spire-map-wrapper {
+          flex-direction: column;
+          height: 520px;
+        }
+        .spire-map-sidebar {
+          width: 100%;
+          border-left: none;
+          border-top: 2px solid #8d6e40;
+          padding: 16px;
+        }
+        .spire-map-scroll-area {
+          padding: 24px 10px;
+          gap: 28px;
+        }
+        .spire-map-floor-row {
+          gap: 24px;
+        }
+      }
       .spire-map-floor-row {
         display: flex;
         justify-content: center;
@@ -447,14 +474,14 @@ export class UIOverlay {
         box-shadow: 0 0 20px rgba(56, 189, 248, 0.8);
       }
       .spire-node-icon {
-        font-size: 24px;
+        font-size: var(--fs-xl);
         filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.9));
       }
       .spire-node-title-tag {
         position: absolute;
         bottom: -18px;
         font-family: 'Share Tech Mono', monospace;
-        font-size: 10.5px;
+        font-size: var(--fs-s);
         font-weight: 700;
         color: #e2d7be;
         white-space: nowrap;
@@ -478,20 +505,20 @@ export class UIOverlay {
       }
       .spire-sidebar-heading {
         font-family: 'Share Tech Mono', monospace;
-        font-size: 11px;
+        font-size: var(--fs-s);
         color: #facc15;
         border-bottom: 1px solid #5a452c;
         padding-bottom: 6px;
         margin-bottom: 12px;
       }
       .spire-sidebar-title {
-        font-size: 22px;
+        font-size: var(--fs-xl);
         font-weight: 800;
         color: #fff9ea;
         margin-bottom: 8px;
       }
       .spire-sidebar-desc {
-        font-size: 13.5px;
+        font-size: var(--fs-m);
         color: #c7b89d;
         line-height: 1.65;
         margin-bottom: 20px;
@@ -515,6 +542,7 @@ export class UIOverlay {
         display: flex;
         align-items: center;
         gap: 20px;
+        flex-wrap: wrap;
         background: rgba(10, 7, 5, 0.85);
         border: 1px solid #5a452c;
         border-radius: 6px;
@@ -536,10 +564,9 @@ export class UIOverlay {
         object-fit: cover;
       }
       .spire-speech-bubble {
-        font-size: 13.5px;
+        font-size: var(--fs-m);
         color: #e2d7be;
         line-height: 1.6;
-        font-style: italic;
       }
       .spire-shop-shelf {
         display: grid;
@@ -567,7 +594,7 @@ export class UIOverlay {
         align-items: center;
         gap: 6px;
         font-family: 'Share Tech Mono', monospace;
-        font-size: 13px;
+        font-size: var(--fs-m);
         font-weight: 700;
         color: #facc15;
       }
@@ -616,20 +643,43 @@ export class UIOverlay {
         box-shadow: 0 18px 40px rgba(0, 0, 0, 0.95), 0 0 25px rgba(255, 215, 0, 0.5);
       }
       .spire-tablet-icon {
-        font-size: 42px;
+        font-size: var(--fs-xl);
         margin-bottom: 12px;
       }
       .spire-tablet-title {
-        font-size: 20px;
+        font-size: var(--fs-xl);
         font-weight: 800;
         color: #fff9ea;
         margin-bottom: 8px;
       }
       .spire-tablet-desc {
-        font-size: 13px;
+        font-size: var(--fs-m);
         color: #c7b89d;
         line-height: 1.55;
         text-align: center;
+      }
+      .spire-tablet-status {
+        font-family: 'Share Tech Mono', monospace;
+        font-size: var(--fs-s);
+        color: #facc15;
+        margin-top: 10px;
+        text-align: center;
+        line-height: 1.5;
+      }
+      @media (max-width: 800px) {
+        .spire-camp-box {
+          height: auto;
+          min-height: 520px;
+        }
+        .spire-tablets-row {
+          flex-direction: column;
+          align-items: center;
+          gap: 16px;
+        }
+        .spire-tablet {
+          width: 100%;
+          max-width: 320px;
+        }
       }
 
       /* -----------------------------------------------------------
@@ -670,13 +720,13 @@ export class UIOverlay {
         text-align: left;
       }
       .spire-story-title {
-        font-size: 24px;
+        font-size: var(--fs-xl);
         font-weight: 800;
         color: #ffd700;
         margin-bottom: 14px;
       }
       .spire-story-text {
-        font-size: 14px;
+        font-size: var(--fs-l);
         color: #e2d7be;
         line-height: 1.7;
         margin-bottom: 24px;
@@ -726,41 +776,41 @@ export class UIOverlay {
     box.innerHTML = `
       <!-- Hero Cover Image -->
       <div style="width: 100%; height: 340px; position: relative; overflow: hidden; border-bottom: 2px solid #8d6e40;">
-        <img src="./assets/images/title_hero_cover.jpg" style="width: 100%; height: 100%; object-fit: cover; display: block;" />
+        <img src="./assets/images/title_hero_cover.jpg" alt="钢铁誓约主视觉" style="width: 100%; height: 100%; object-fit: cover; display: block;" />
         <div style="position: absolute; inset: 0; background: linear-gradient(180deg, rgba(0,0,0,0.1) 0%, rgba(16, 11, 7, 0.8) 100%);"></div>
         <div style="position: absolute; bottom: 20px; left: 0; right: 0; text-align: center;">
-          <h1 style="font-family: 'Chakra Petch', serif; font-size: 38px; font-weight: 800; color: #ffd700; text-shadow: 0 4px 16px rgba(0,0,0,0.9), 0 0 25px rgba(255, 215, 0, 0.4); margin-bottom: 6px;">
-            钢铁誓约 · BATTLE CITY: ROGUE BASTION
+          <h1 style="font-family: 'Chakra Petch', serif; font-size: var(--fs-xl); font-weight: 800; color: #ffd700; text-shadow: 0 4px 16px rgba(0,0,0,0.9), 0 0 25px rgba(255, 215, 0, 0.4); margin-bottom: 6px;">
+            钢铁誓约 — BATTLE CITY: ROGUE BASTION
           </h1>
-          <p style="font-family: 'Share Tech Mono', monospace; font-size: 14px; color: #e2d7be; letter-spacing: 2px;">
-            [ 4K SLAY-THE-SPIRE STYLE COMBAT & ROGUELIKE REINFORCEMENTS ]
+          <p style="font-family: 'Share Tech Mono', monospace; font-size: var(--fs-l); color: #e2d7be; letter-spacing: 2px;">
+            [ 杀戮尖塔式战斗与肉鸽强化 ]
           </p>
         </div>
       </div>
 
       <!-- Feature Badges -->
       <div style="padding: 24px 30px;">
-        <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; margin-bottom: 24px; text-align: left;">
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 14px; margin-bottom: 24px; text-align: left;">
           <div style="background: rgba(30, 22, 14, 0.8); border: 1px solid #5a452c; border-radius: 6px; padding: 12px;">
-            <div style="color: #ffd700; font-weight: 700; font-size: 14px; margin-bottom: 4px;">⚔ 10 大战术地形</div>
-            <div style="color: #c7b89d; font-size: 12px; line-height: 1.5;">水堑阻隔、废墟巷战、热带密林、极地霜原与钢铁要塞</div>
+            <div style="color: #ffd700; font-weight: 700; font-size: var(--fs-l); margin-bottom: 4px;">⚔ 10 大战术地形</div>
+            <div style="color: #c7b89d; font-size: var(--fs-m); line-height: 1.5;">水堑阻隔、废墟巷战、热带密林、极地霜原与钢铁要塞</div>
           </div>
           <div style="background: rgba(30, 22, 14, 0.8); border: 1px solid #5a452c; border-radius: 6px; padding: 12px;">
-            <div style="color: #ffd700; font-weight: 700; font-size: 14px; margin-bottom: 4px;">🃏 20+ 战备卡牌</div>
-            <div style="color: #c7b89d; font-size: 12px; line-height: 1.5;">双联火炮、高膛穿甲、能量护盾、电弧连锁与死灵吸血</div>
+            <div style="color: #ffd700; font-weight: 700; font-size: var(--fs-l); margin-bottom: 4px;">🃏 20+ 战备卡牌</div>
+            <div style="color: #c7b89d; font-size: var(--fs-m); line-height: 1.5;">双联火炮、高膛穿甲、能量护盾、电弧连锁与死灵吸血</div>
           </div>
           <div style="background: rgba(30, 22, 14, 0.8); border: 1px solid #5a452c; border-radius: 6px; padding: 12px;">
-            <div style="color: #ffd700; font-weight: 700; font-size: 14px; margin-bottom: 4px;">⚡ 拟真火控机动</div>
-            <div style="color: #c7b89d; font-size: 12px; line-height: 1.5;">360° 自由旋转炮塔、喷气漂移冲刺、老鹰近防自动速射机炮</div>
+            <div style="color: #ffd700; font-weight: 700; font-size: var(--fs-l); margin-bottom: 4px;">⚡ 拟真火控机动</div>
+            <div style="color: #c7b89d; font-size: var(--fs-m); line-height: 1.5;">360° 自由旋转炮塔、喷气漂移冲刺、老鹰近防自动速射机炮</div>
           </div>
           <div style="background: rgba(30, 22, 14, 0.8); border: 1px solid #5a452c; border-radius: 6px; padding: 12px;">
-            <div style="color: #ffd700; font-weight: 700; font-size: 14px; margin-bottom: 4px;">👑 歌利亚巨兽 BOSS</div>
-            <div style="color: #c7b89d; font-size: 12px; line-height: 1.5;">多炮塔陆上巡洋要塞巨坦，四联主炮与导弹齐射角斗场死斗</div>
+            <div style="color: #ffd700; font-weight: 700; font-size: var(--fs-l); margin-bottom: 4px;">👑 歌利亚巨兽 BOSS</div>
+            <div style="color: #c7b89d; font-size: var(--fs-m); line-height: 1.5;">多炮塔陆上巡洋要塞巨坦，四联主炮与导弹齐射角斗场死斗</div>
           </div>
         </div>
 
-        <button class="spire-skip-btn" id="btn-start-run" style="font-size: 18px; padding: 14px 50px; background: linear-gradient(180deg, #991b1b 0%, #581010 100%); border-color: #f87171; color: #fff;">
-          开始战役 (START RUN)
+        <button class="spire-skip-btn" id="btn-start-run" style="font-size: var(--fs-l); padding: 14px 50px; background: linear-gradient(180deg, #8a6d1f 0%, #5c4a12 100%); border-color: #facc15; color: #fff9ea;">
+          开始战役
         </button>
       </div>
     `;
@@ -794,12 +844,12 @@ export class UIOverlay {
 
     box.innerHTML = `
       <div class="spire-draft-title">挑选一张战备模块卡牌</div>
-      <div class="spire-draft-subtitle">CHOOSE 1 OF 3 REINFORCEMENT CARDS FOR YOUR DECK</div>
+      <div class="spire-draft-subtitle">从 3 张强化卡中挑选 1 张</div>
 
       <div class="spire-cards-row" id="spire-cards-container"></div>
 
       <button class="spire-skip-btn" id="btn-skip-card">
-        跳过此卡 (SKIP CARD)
+        跳过此卡
       </button>
     `;
 
@@ -816,7 +866,6 @@ export class UIOverlay {
       card.style.setProperty('--card-glow', `${rColor}55`);
 
       card.innerHTML = `
-        <div class="spire-energy-orb">${typeInfo.cost}</div>
         <div class="spire-card-title">${chip.nameZh}</div>
         <div class="spire-card-art-box">
           <img src="${cardArtUrl}" alt="${chip.nameZh}" />
@@ -849,6 +898,7 @@ export class UIOverlay {
         this.clear();
         onSelect(chip);
       });
+      this.makeKeyboardActivatable(card);
 
       container.appendChild(card);
     });
@@ -912,10 +962,10 @@ export class UIOverlay {
             <span>${playerInventory.scraps} 零件</span>
           </div>
           <div class="spire-stat-pill act">
-            <span>第 ${Math.floor(campaignMap.currentFloor / 4) + 1} 幕 // FLOOR ${campaignMap.currentFloor + 1} OF ${campaignMap.totalFloors}</span>
+            <span>第 ${Math.floor(campaignMap.currentFloor / 4) + 1} 幕 // 第 ${campaignMap.currentFloor + 1} 层，共 ${campaignMap.totalFloors} 层</span>
           </div>
         </div>
-        <div style="font-family: 'Share Tech Mono', monospace; font-size: 12px; color: #ffd700;">
+        <div style="font-family: 'Share Tech Mono', monospace; font-size: var(--fs-m); color: #ffd700;">
           已装载模块 (${playerInventory.getActiveChips().length})
         </div>
       </div>
@@ -927,24 +977,24 @@ export class UIOverlay {
         <!-- Right Mission Dossier Sidebar -->
         <div class="spire-map-sidebar">
           <div>
-            <div class="spire-sidebar-heading">// TACTICAL BRIEFING DOSSIER</div>
+            <div class="spire-sidebar-heading">// 战术简报</div>
             <div class="spire-dossier-art-box" style="width: 100%; height: 140px; border-radius: 6px; border: 2px solid #8d6e40; overflow: hidden; margin-bottom: 12px; background: #000; box-shadow: inset 0 0 16px rgba(0, 0, 0, 0.9);">
-              <img id="dossier-art" src="./assets/images/battlefield_ground.jpg" style="width: 100%; height: 100%; object-fit: cover; display: block;" />
+              <img id="dossier-art" src="./assets/images/battlefield_ground.jpg" alt="战区示意图" style="width: 100%; height: 100%; object-fit: cover; display: block;" />
             </div>
             <div class="spire-sidebar-title" id="dossier-title">${defaultPreviewNode ? defaultPreviewNode.nameZh : '选择战区'}</div>
-            <div id="dossier-threat" style="display: inline-block; padding: 2px 8px; background: rgba(239, 68, 68, 0.2); border: 1px solid #ef4444; color: #ef4444; font-family: 'Share Tech Mono', monospace; font-size: 11px; margin-bottom: 12px;">
-              THREAT LEVEL: HIGH
+            <div id="dossier-threat" style="display: inline-block; padding: 2px 8px; background: rgba(239, 68, 68, 0.2); border: 1px solid #ef4444; color: #ef4444; font-family: 'Share Tech Mono', monospace; font-size: var(--fs-s); margin-bottom: 12px;">
+              威胁等级：高 // 战区
             </div>
             <div class="spire-sidebar-desc" id="dossier-desc">
               ${defaultPreviewNode ? defaultPreviewNode.descZh : '请点击沙盘高亮路线节点确认出击。'}
             </div>
           </div>
           <div>
-            <div id="dossier-loot" style="font-family: 'Share Tech Mono', monospace; font-size: 11px; color: #facc15; margin-bottom: 12px;">
-              • 预计战利品: 180 ~ 260 零件
+            <div id="dossier-loot" style="font-family: 'Share Tech Mono', monospace; font-size: var(--fs-s); color: #facc15; margin-bottom: 12px;">
+              • 预计战利品：200 ~ 300 零件
             </div>
-            <button class="spire-skip-btn" id="btn-enter-spire-node" style="width: 100%; padding: 12px 0; background: linear-gradient(180deg, #991b1b 0%, #581010 100%); border-color: #f87171; color: #fff;" ${defaultPreviewNode ? '' : 'disabled'}>
-              踏入战区 (PROCEED)
+            <button class="spire-skip-btn" id="btn-enter-spire-node" style="width: 100%; padding: 12px 0; background: linear-gradient(180deg, #8a6d1f 0%, #5c4a12 100%); border-color: #facc15; color: #fff9ea;" ${defaultPreviewNode ? '' : 'disabled'}>
+              踏入战区
             </button>
           </div>
         </div>
@@ -963,7 +1013,7 @@ export class UIOverlay {
       dossierTitle.textContent = node.nameZh;
       dossierDesc.textContent = node.descZh;
       btnEnter.disabled = !node.available;
-      btnEnter.textContent = node.available ? '踏入战区 (PROCEED)' : '不可通行';
+      btnEnter.textContent = node.available ? '踏入战区' : '不可通行';
 
       const dossierArt = box.querySelector('#dossier-art') as HTMLImageElement;
       const dossierThreat = box.querySelector('#dossier-threat') as HTMLElement;
@@ -972,51 +1022,51 @@ export class UIOverlay {
       if (node.type === 'boss') {
         if (dossierArt) dossierArt.src = './assets/images/goliath_boss_portrait.jpg';
         if (dossierThreat) {
-          dossierThreat.textContent = 'THREAT LEVEL: APOCALYPTIC // BOSS';
+          dossierThreat.textContent = '威胁等级：末日级 // 首领';
           dossierThreat.style.borderColor = '#ef4444';
           dossierThreat.style.color = '#ef4444';
         }
-        if (dossierLoot) dossierLoot.textContent = '• 预计战利品: 500+ 零件 & 战役通关勋章';
+        if (dossierLoot) dossierLoot.textContent = '• 预计战利品：260 ~ 290 零件与战役通关勋章';
       } else if (node.type === 'elite') {
         if (dossierArt) dossierArt.src = './assets/images/commander_ignis_portrait.jpg';
         if (dossierThreat) {
-          dossierThreat.textContent = 'THREAT LEVEL: EXTREME // ELITE COMMANDER';
+          dossierThreat.textContent = '威胁等级：极高 // 精英指挥官';
           dossierThreat.style.borderColor = '#f59e0b';
           dossierThreat.style.color = '#f59e0b';
         }
-        if (dossierLoot) dossierLoot.textContent = '• 预计战利品: 320 ~ 450 零件 & 稀有特种芯片';
+        if (dossierLoot) dossierLoot.textContent = '• 预计战利品：200 ~ 260 零件与稀有特种芯片';
       } else if (node.type === 'shop') {
         if (dossierArt) dossierArt.src = './assets/images/merchant_shopkeeper.jpg';
         if (dossierThreat) {
-          dossierThreat.textContent = 'THREAT LEVEL: SECURE // BLACK MARKET';
+          dossierThreat.textContent = '威胁等级：安全 // 黑市';
           dossierThreat.style.borderColor = '#facc15';
           dossierThreat.style.color = '#facc15';
         }
-        if (dossierLoot) dossierLoot.textContent = '• 黑市军火兑换 & 老兵机修站';
+        if (dossierLoot) dossierLoot.textContent = '• 黑市军火兑换与老兵机修站';
       } else if (node.type === 'rest') {
         if (dossierArt) dossierArt.src = './assets/images/slay_camp_rest.jpg';
         if (dossierThreat) {
-          dossierThreat.textContent = 'THREAT LEVEL: SAFE // CAMPSITE';
+          dossierThreat.textContent = '威胁等级：安全 // 营地';
           dossierThreat.style.borderColor = '#4ade80';
           dossierThreat.style.color = '#4ade80';
         }
-        if (dossierLoot) dossierLoot.textContent = '• 装甲全面修复 或 战车主炮锻造';
+        if (dossierLoot) dossierLoot.textContent = '• 装甲全面修复或战车主炮锻造';
       } else if (node.type === 'event') {
         if (dossierArt) dossierArt.src = './assets/images/event_derelict_tank.jpg';
         if (dossierThreat) {
-          dossierThreat.textContent = 'THREAT LEVEL: UNKNOWN // ANOMALY';
+          dossierThreat.textContent = '威胁等级：未知 // 异常';
           dossierThreat.style.borderColor = '#c084fc';
           dossierThreat.style.color = '#c084fc';
         }
-        if (dossierLoot) dossierLoot.textContent = '• 遭遇未知战地实验体或秘密机密';
+        if (dossierLoot) dossierLoot.textContent = '• 遭遇未知战地实验体或机密发现';
       } else {
         if (dossierArt) dossierArt.src = './assets/images/battlefield_ground.jpg';
         if (dossierThreat) {
-          dossierThreat.textContent = 'THREAT LEVEL: HIGH // BATTLEZONE';
+          dossierThreat.textContent = '威胁等级：高 // 战区';
           dossierThreat.style.borderColor = '#ef4444';
           dossierThreat.style.color = '#ef4444';
         }
-        if (dossierLoot) dossierLoot.textContent = '• 预计战利品: 180 ~ 260 零件';
+        if (dossierLoot) dossierLoot.textContent = '• 预计战利品：200 ~ 300 零件';
       }
     };
 
@@ -1100,7 +1150,7 @@ export class UIOverlay {
   // -------------------------------------------------------------
   // 4. SLAY THE SPIRE SHOP (地牢黑市商人)
   // -------------------------------------------------------------
-  public showShop(onLeave: () => void, onRepair: () => void, onFortify: () => void) {
+  public showShop(onLeave: () => void, onRepair: () => void, onFortify: () => void, getPlayerHp: () => { hp: number; maxHp: number } = () => ({ hp: 100, maxHp: 100 }), onChipPurchased: (chip: UpgradeChip) => void = () => {}) {
     bgm.playTrack('briefing');
 
     const backdrop = document.createElement('div');
@@ -1109,64 +1159,66 @@ export class UIOverlay {
     const box = document.createElement('div');
     box.className = 'spire-shop-box';
 
-    const shopChips = ALL_UPGRADES.filter(c => !playerInventory.hasChip(c.id)).slice(0, 3);
+    const shopChips = ALL_UPGRADES.filter(c => !playerInventory.hasChip(c.id) && !UNIMPLEMENTED_CHIPS.has(c.id)).slice(0, 3);
+    const playerHpNow = getPlayerHp();
+    const repairFull = playerHpNow.hp >= playerHpNow.maxHp;
 
     box.innerHTML = `
       <!-- Merchant Portrait & Dialogue -->
       <div class="spire-merchant-banner">
         <div class="spire-merchant-avatar">
-          <img src="./assets/images/merchant_shopkeeper.jpg" alt="Merchant" />
+          <img src="./assets/images/merchant_shopkeeper.jpg" alt="黑市军需官「老锤」" />
         </div>
         <div>
-          <div style="font-family: 'Chakra Petch', serif; font-size: 18px; font-weight: 700; color: #ffd700; margin-bottom: 4px;">
+          <div style="font-family: 'Chakra Petch', serif; font-size: var(--fs-l); font-weight: 700; color: #ffd700; margin-bottom: 4px;">
             黑市军械军需官「老锤」
           </div>
           <div class="spire-speech-bubble">
-            “嘿，车长！前线刚缴获的特种战备芯片，随便挑！只要废铁零件管够，保你一路杀穿歌利亚！”
+            “嘿，车长！前线刚缴获的特种战备芯片，随便挑！只要零件管够，保你一路杀穿歌利亚！”
           </div>
         </div>
-        <div style="margin-left: auto; text-align: right; font-family: 'Share Tech Mono', monospace; font-size: 15px; color: #facc15; font-weight: 700;">
+        <div style="margin-left: auto; text-align: right; font-family: 'Share Tech Mono', monospace; font-size: var(--fs-l); color: #facc15; font-weight: 700;">
           ⚙ 拥有: ${playerInventory.scraps} 零件
         </div>
       </div>
 
       <!-- Shop Shelf 1: Cards -->
-      <div style="font-family: 'Share Tech Mono', monospace; font-size: 12px; color: #ffd700; margin-bottom: 8px; text-align: left;">
-        // 战备芯片特惠货架 (UPGRADE CARDS)
+      <div style="font-family: 'Share Tech Mono', monospace; font-size: var(--fs-m); color: #ffd700; margin-bottom: 8px; text-align: left;">
+        // 战备芯片特惠货架
       </div>
       <div class="spire-shop-shelf" id="shop-cards-shelf"></div>
 
       <!-- Shop Shelf 2: Services -->
-      <div style="font-family: 'Share Tech Mono', monospace; font-size: 12px; color: #ffd700; margin-bottom: 8px; text-align: left;">
-        // 战地整备服务 (SPECIAL SERVICES)
+      <div style="font-family: 'Share Tech Mono', monospace; font-size: var(--fs-m); color: #ffd700; margin-bottom: 8px; text-align: left;">
+        // 战地整备服务
       </div>
       <div class="spire-shop-shelf" style="margin-bottom: 24px;">
         <div class="spire-shop-item-card">
           <div>
-            <div style="font-weight: 700; color: #4ade80; font-size: 15px;">战车紧急大修 (+50 HP)</div>
-            <div style="font-size: 12px; color: #c7b89d; margin-top: 4px;">立即修复战车装甲结构 50 点生命值。</div>
+            <div style="font-weight: 700; color: #4ade80; font-size: var(--fs-l);">战车紧急大修 (+50 HP)</div>
+            <div style="font-size: var(--fs-m); color: #c7b89d; margin-top: 4px;">${repairFull ? '装甲已满，无需维修。' : '立即修复战车装甲结构 50 点生命值。'}</div>
           </div>
           <div style="margin-top: 12px; display: flex; justify-content: space-between; align-items: center;">
             <span class="spire-price-tag">⚙ 30 零件</span>
-            <button class="spire-skip-btn" id="buy-repair" style="padding: 6px 16px; font-size: 13px;">采购</button>
+            <button class="spire-skip-btn" id="buy-repair" style="padding: 6px 16px; font-size: var(--fs-m);" ${repairFull || playerInventory.scraps < 30 ? 'disabled' : ''}>采购</button>
           </div>
         </div>
 
         <div class="spire-shop-item-card">
           <div>
-            <div style="font-weight: 700; color: #38bdf8; font-size: 15px;">基地钛钢白防线 (25秒)</div>
-            <div style="font-size: 12px; color: #c7b89d; margin-top: 4px;">将老鹰指挥要塞周边加固为无敌白钢。</div>
+            <div style="font-weight: 700; color: #38bdf8; font-size: var(--fs-l);">基地白钢防线 (25秒)</div>
+            <div style="font-size: var(--fs-m); color: #c7b89d; margin-top: 4px;">将老鹰指挥要塞周边加固为无敌白钢。</div>
           </div>
           <div style="margin-top: 12px; display: flex; justify-content: space-between; align-items: center;">
             <span class="spire-price-tag">⚙ 40 零件</span>
-            <button class="spire-skip-btn" id="buy-fortify" style="padding: 6px 16px; font-size: 13px;">采购</button>
+            <button class="spire-skip-btn" id="buy-fortify" style="padding: 6px 16px; font-size: var(--fs-m);" ${playerInventory.scraps < 40 ? 'disabled' : ''}>采购</button>
           </div>
         </div>
       </div>
 
       <div style="text-align: center;">
         <button class="spire-skip-btn" id="btn-leave-shop">
-          离开商店 (LEAVE SHOP)
+          离开商店
         </button>
       </div>
     `;
@@ -1181,22 +1233,23 @@ export class UIOverlay {
       itemCard.className = 'spire-shop-item-card';
       itemCard.innerHTML = `
         <div>
-          <div style="font-weight: 700; color: ${rColor}; font-size: 16px;">${chip.nameZh}</div>
-          <div style="font-size: 12.5px; color: #c7b89d; margin-top: 4px; line-height: 1.5;">${chip.descriptionZh}</div>
+          <div style="font-weight: 700; color: ${rColor}; font-size: var(--fs-l);">${chip.nameZh}</div>
+          <div style="font-size: var(--fs-m); color: #c7b89d; margin-top: 4px; line-height: 1.5;">${chip.descriptionZh}</div>
         </div>
         <div style="margin-top: 12px; display: flex; justify-content: space-between; align-items: center;">
           <span class="spire-price-tag">⚙ ${cost} 零件</span>
-          <button class="spire-skip-btn" id="buy-chip-${chip.id}" style="padding: 6px 16px; font-size: 13px;">采购</button>
+          <button class="spire-skip-btn" id="buy-chip-${chip.id}" style="padding: 6px 16px; font-size: var(--fs-m);" ${playerInventory.scraps < cost ? 'disabled' : ''}>采购</button>
         </div>
       `;
 
       itemCard.querySelector(`#buy-chip-${chip.id}`)!.addEventListener('click', () => {
         if (playerInventory.spendScrap(cost)) {
           playerInventory.addChip(chip.id);
+          onChipPurchased(chip);
           sounds.playUiClick();
           sounds.playPowerup();
           this.clear();
-          this.showShop(onLeave, onRepair, onFortify);
+          this.showShop(onLeave, onRepair, onFortify, getPlayerHp, onChipPurchased);
         } else {
           sounds.playError();
         }
@@ -1211,7 +1264,7 @@ export class UIOverlay {
         sounds.playUiClick();
         sounds.playPowerup();
         this.clear();
-        this.showShop(onLeave, onRepair, onFortify);
+        this.showShop(onLeave, onRepair, onFortify, getPlayerHp, onChipPurchased);
       } else {
         sounds.playError();
       }
@@ -1223,7 +1276,7 @@ export class UIOverlay {
         sounds.playUiClick();
         sounds.playPowerup();
         this.clear();
-        this.showShop(onLeave, onRepair, onFortify);
+        this.showShop(onLeave, onRepair, onFortify, getPlayerHp, onChipPurchased);
       } else {
         sounds.playError();
       }
@@ -1244,7 +1297,7 @@ export class UIOverlay {
   // -------------------------------------------------------------
   // 5. SLAY THE SPIRE REST SITE (营火休息与主炮锻造)
   // -------------------------------------------------------------
-  public showRest(onDone: () => void, onFullHeal: () => void, onUpgradeWeapon: () => void) {
+  public showRest(onDone: () => void, onFullHeal: () => void, onUpgradeWeapon: () => void, status: { playerHp: number; playerMaxHp: number; eagleHp: number; eagleMaxHp: number; stars: number } = { playerHp: 100, playerMaxHp: 100, eagleHp: 48, eagleMaxHp: 48, stars: 0 }) {
     bgm.playTrack('briefing');
 
     const backdrop = document.createElement('div');
@@ -1255,10 +1308,10 @@ export class UIOverlay {
 
     box.innerHTML = `
       <div style="text-align: center; text-shadow: 0 4px 16px rgba(0,0,0,0.9);">
-        <h2 style="font-family: 'Chakra Petch', serif; font-size: 32px; font-weight: 800; color: #ffd700; margin-bottom: 4px;">
-          战地地下庇护营火 (REST SITE)
+        <h2 style="font-family: 'Chakra Petch', serif; font-size: var(--fs-xl); font-weight: 800; color: #ffd700; margin-bottom: 4px;">
+          战地地下庇护营火
         </h2>
-        <p style="font-family: 'Share Tech Mono', monospace; font-size: 14px; color: #e2d7be;">
+        <p style="font-family: 'Share Tech Mono', monospace; font-size: var(--fs-l); color: #e2d7be;">
           在交火间隙寻获掩蔽车间，请选择今夜的整备方案
         </p>
       </div>
@@ -1267,15 +1320,17 @@ export class UIOverlay {
         <!-- Tablet 1: Rest -->
         <div class="spire-tablet" id="camp-heal">
           <div class="spire-tablet-icon">🔥</div>
-          <div class="spire-tablet-title" style="color: #4ade80;">抢修休整 (REST)</div>
-          <div class="spire-tablet-desc">战车恢复 70% 最大生命值，并紧急修复老鹰要塞 50 点装甲。</div>
+          <div class="spire-tablet-title" style="color: #4ade80;">抢修休整</div>
+          <div class="spire-tablet-desc">战车与护盾完全恢复，并紧急修复老鹰要塞 50 点装甲。</div>
+          <div class="spire-tablet-status">当前装甲 ${Math.round(status.playerHp)} / ${Math.round(status.playerMaxHp)}，要塞 ${Math.round(status.eagleHp)} / ${Math.round(status.eagleMaxHp)}${status.playerHp >= status.playerMaxHp && status.eagleHp >= status.eagleMaxHp ? '（已满）' : ''}</div>
         </div>
 
         <!-- Tablet 2: Smith -->
         <div class="spire-tablet" id="camp-upgrade">
           <div class="spire-tablet-icon">🔨</div>
-          <div class="spire-tablet-title" style="color: #facc15;">车床锻造 (SMITH)</div>
-          <div class="spire-tablet-desc">主炮星级升级 1 阶，全面强化炮弹穿透威力、初速与覆盖面。</div>
+          <div class="spire-tablet-title" style="color: #facc15;">车床锻造</div>
+          <div class="spire-tablet-desc">主炮星级 +1。集满 3 星后，炮弹可轰碎钛合金钢墙。</div>
+          <div class="spire-tablet-status">当前星级：${status.stars} / 3${status.stars >= 3 ? '（已满）' : ''}</div>
         </div>
       </div>
     `;
@@ -1287,6 +1342,7 @@ export class UIOverlay {
       this.clear();
       onDone();
     });
+    this.makeKeyboardActivatable(box.querySelector('#camp-heal') as HTMLElement);
 
     box.querySelector('#camp-upgrade')!.addEventListener('click', () => {
       onUpgradeWeapon();
@@ -1295,6 +1351,7 @@ export class UIOverlay {
       this.clear();
       onDone();
     });
+    this.makeKeyboardActivatable(box.querySelector('#camp-upgrade') as HTMLElement);
 
     this.attachAudioFeedback(box);
 
@@ -1317,14 +1374,14 @@ export class UIOverlay {
     box.innerHTML = `
       <!-- Left: Event Artwork -->
       <div class="spire-event-left-art">
-        <img src="./assets/images/event_derelict_tank.jpg" alt="Derelict Prototype Tank" />
+        <img src="./assets/images/event_derelict_tank.jpg" alt="废弃的原型战车" />
       </div>
 
       <!-- Right: Story & Choices -->
       <div class="spire-event-right-story">
         <div>
-          <div style="font-family: 'Share Tech Mono', monospace; font-size: 11px; color: #ffd700; margin-bottom: 6px;">
-            // UNKNOWN EVENT // 战地机密发现
+          <div style="font-family: 'Share Tech Mono', monospace; font-size: var(--fs-s); color: #ffd700; margin-bottom: 6px;">
+            // 未知事件 // 战地机密发现
           </div>
           <div class="spire-story-title">废弃的原型战车「GOLIATH PROTO」</div>
           <div class="spire-story-text">
@@ -1335,20 +1392,24 @@ export class UIOverlay {
 
         <div>
           <div class="spire-event-choice" id="choice-1">
-            <div style="font-weight: 700; color: #f87171; font-size: 14px;">[ 冒险拆解反应堆核心 ]</div>
-            <div style="font-size: 12.5px; color: #c7b89d; margin-top: 3px;">高收益高风险：回收 65 零件，被辐射电弧灼伤扣除 20 生命值。</div>
+            <div style="font-weight: 700; color: #f87171; font-size: var(--fs-l);">[ 冒险拆解反应堆核心 ]</div>
+            <div style="font-size: var(--fs-m); color: #c7b89d; margin-top: 3px;">高收益高风险：回收 65 零件，被辐射电弧灼伤扣除 20 生命值。</div>
           </div>
           <div class="spire-event-choice" id="choice-2">
-            <div style="font-weight: 700; color: #4ade80; font-size: 14px;">[ 安全回收外挂备件 ]</div>
-            <div style="font-size: 12.5px; color: #c7b89d; margin-top: 3px;">稳妥收益：拆解外层轻型装甲板，安全获得 30 零件。</div>
+            <div style="font-weight: 700; color: #4ade80; font-size: var(--fs-l);">[ 安全回收外挂备件 ]</div>
+            <div style="font-size: var(--fs-m); color: #c7b89d; margin-top: 3px;">稳妥收益：拆解外层轻型装甲板，安全获得 30 零件。</div>
           </div>
           <div class="spire-event-choice" id="choice-3">
-            <div style="font-weight: 700; color: #e2d7be; font-size: 14px;">[ 保持警戒离开 ]</div>
-            <div style="font-size: 12.5px; color: #94a3b8; margin-top: 3px;">不冒任何意外风险，迅速撤离现场。</div>
+            <div style="font-weight: 700; color: #e2d7be; font-size: var(--fs-l);">[ 保持警戒离开 ]</div>
+            <div style="font-size: var(--fs-m); color: #94a3b8; margin-top: 3px;">不冒任何意外风险，迅速撤离现场。</div>
           </div>
         </div>
       </div>
     `;
+
+    this.makeKeyboardActivatable(box.querySelector('#choice-1') as HTMLElement);
+    this.makeKeyboardActivatable(box.querySelector('#choice-2') as HTMLElement);
+    this.makeKeyboardActivatable(box.querySelector('#choice-3') as HTMLElement);
 
     box.querySelector('#choice-1')!.addEventListener('click', () => {
       onAddScrap(65);
@@ -1406,35 +1467,35 @@ export class UIOverlay {
 
     box.innerHTML = `
       <div style="width: 100%; height: 320px; position: relative; overflow: hidden; border-bottom: 2px solid ${isVictory ? '#ffd700' : '#ef4444'};">
-        <img src="${bannerArt}" style="width: 100%; height: 100%; object-fit: cover; display: block;" />
+        <img src="${bannerArt}" alt="${isVictory ? '胜利勋章' : '战败墓地'}" style="width: 100%; height: 100%; object-fit: cover; display: block;" />
       </div>
 
       <div style="padding: 24px 30px;">
-        <h2 style="font-family: 'Chakra Petch', serif; font-size: 32px; font-weight: 800; color: ${isVictory ? '#ffd700' : '#ef4444'}; margin-bottom: 8px;">
-          ${isVictory ? '战役大捷：终极要塞「歌利亚」已彻底粉碎！' : '战役终结：战车残骸终结于此...'}
+        <h2 style="font-family: 'Chakra Petch', serif; font-size: var(--fs-xl); font-weight: 800; color: ${isVictory ? '#ffd700' : '#ef4444'}; margin-bottom: 8px;">
+          ${isVictory ? '战役大捷：终极要塞「歌利亚」已彻底粉碎！' : '战役终结：战车残骸静卧于此……'}
         </h2>
-        <p style="font-size: 14px; color: #c7b89d; margin-bottom: 24px;">
+        <p style="font-size: var(--fs-l); color: #c7b89d; margin-bottom: 24px;">
           ${reason}
         </p>
 
         <!-- Stats Breakdown -->
         <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; background: rgba(14, 10, 6, 0.85); border: 1px solid #5a452c; border-radius: 6px; padding: 18px; margin-bottom: 24px;">
           <div>
-            <div style="font-family: 'Share Tech Mono', monospace; font-size: 12px; color: #c7b89d;">歼灭敌军</div>
-            <div style="font-size: 28px; font-weight: 800; color: #f87171;">${playerInventory.kills} 辆</div>
+            <div style="font-family: 'Share Tech Mono', monospace; font-size: var(--fs-m); color: #c7b89d;">歼灭敌军</div>
+            <div style="font-size: var(--fs-xl); font-weight: 800; color: #f87171;">${playerInventory.kills} 辆</div>
           </div>
           <div>
-            <div style="font-family: 'Share Tech Mono', monospace; font-size: 12px; color: #c7b89d;">回收零件</div>
-            <div style="font-size: 28px; font-weight: 800; color: #facc15;">${playerInventory.scraps}</div>
+            <div style="font-family: 'Share Tech Mono', monospace; font-size: var(--fs-m); color: #c7b89d;">剩余零件</div>
+            <div style="font-size: var(--fs-xl); font-weight: 800; color: #facc15;">${playerInventory.scraps}</div>
           </div>
           <div>
-            <div style="font-family: 'Share Tech Mono', monospace; font-size: 12px; color: #c7b89d;">装载模块</div>
-            <div style="font-size: 28px; font-weight: 800; color: #c084fc;">${playerInventory.getActiveChips().length} 张</div>
+            <div style="font-family: 'Share Tech Mono', monospace; font-size: var(--fs-m); color: #c7b89d;">装载模块</div>
+            <div style="font-size: var(--fs-xl); font-weight: 800; color: #c084fc;">${playerInventory.getActiveChips().length} 张</div>
           </div>
         </div>
 
-        <button class="spire-skip-btn" id="btn-restart-run" style="font-size: 17px; padding: 12px 48px; background: linear-gradient(180deg, #991b1b 0%, #581010 100%); border-color: #f87171; color: #fff;">
-          再次出击 (RETRY RUN)
+        <button class="spire-skip-btn" id="btn-restart-run" style="font-size: var(--fs-l); padding: 12px 48px; background: linear-gradient(180deg, #8a6d1f 0%, #5c4a12 100%); border-color: #facc15; color: #fff9ea;">
+          再次出击
         </button>
       </div>
     `;

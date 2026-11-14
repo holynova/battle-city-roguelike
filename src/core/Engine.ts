@@ -3,7 +3,7 @@
  * Seamless Fullscreen Architecture, Intelligent Auto-Aim/Fire, and Elemental Arsenal:
  * - Dynamic Viewport scaling with zero jarring division lines
  * - Auto-Aim with nearest enemy detection, smooth turret slerp, and auto-fire
- * - True i-frame tactical dodge dash (phases bullets with "DODGE" feedback and afterimages)
+ * - True i-frame tactical dodge dash (phases bullets with "战术闪避" feedback and afterimages)
  * - White hit flashes, directional knockback sparks, and screen damage pulse vignette
  * - 16-Floor campaign with 3 Elite Commanders and 3-Phase Goliath Boss
  */
@@ -134,17 +134,17 @@ export class Engine {
     this.vfx.spawnFloatingText(
       this.player.x,
       this.player.y - 30,
-      this.autoAim ? '🎯 自动开火瞄准: 开' : '🎯 自动开火瞄准: 关',
+      this.autoAim ? '🎯 自动瞄准：开' : '🎯 自动瞄准：关',
       this.autoAim ? '#22c55e' : '#94a3b8'
     );
     const btn = document.getElementById('auto-aim-btn');
     if (btn) {
       if (this.autoAim) {
         btn.classList.add('active');
-        btn.textContent = '🎯 自动瞄准: 开 (T)';
+        btn.textContent = '🎯 自动瞄准：开 (T)';
       } else {
         btn.classList.remove('active');
-        btn.textContent = '🎯 自动瞄准: 关 (T)';
+        btn.textContent = '🎯 自动瞄准：关 (T)';
       }
     }
   }
@@ -302,7 +302,9 @@ export class Engine {
         },
         () => {
           this.map.fortifyBaseWithSteel(25);
-        }
+        },
+        () => ({ hp: this.player.hp, maxHp: this.player.maxHp }),
+        (chip) => this.applyChipPickupEffect(chip)
       );
     } else if (node.type === 'rest') {
       this.state = 'REST';
@@ -315,6 +317,13 @@ export class Engine {
         },
         () => {
           playerInventory.starsCollected = Math.min(3, playerInventory.starsCollected + 1);
+        },
+        {
+          playerHp: this.player.hp,
+          playerMaxHp: this.player.maxHp,
+          eagleHp: this.eagleBase.hp,
+          eagleMaxHp: this.eagleBase.maxHp,
+          stars: playerInventory.starsCollected
         }
       );
     } else if (node.type === 'event') {
@@ -426,13 +435,20 @@ export class Engine {
         playerInventory.addChip(chip.id);
         this.player.syncWeapons();
 
-        if (chip.id === 'reinforced_armor') {
-          this.player.maxHp += 40;
-          this.player.hp = this.player.maxHp;
-        }
+        this.applyChipPickupEffect(chip);
       }
       this.showCampaignMap();
     });
+  }
+
+  // One-time effects for chips that change stats on pickup (draft AND shop buy).
+  // reinforced_armor used to apply only on draft picks; shop purchases silently did nothing.
+  private applyChipPickupEffect(chip: { id: string }) {
+    if (chip.id === 'reinforced_armor') {
+      this.player.maxHp += 40;
+      this.player.hp = this.player.maxHp;
+    }
+    this.player.syncWeapons();
   }
 
   private handleGameOver(reason: string) {
@@ -692,7 +708,8 @@ export class Engine {
       const dist = Math.hypot(p.x - this.player.x, p.y - this.player.y);
       if (dist < this.player.radius + p.radius) {
         this.applyPowerUp(p.type);
-        this.vfx.spawnFloatingText(this.player.x, this.player.y - 25, `GET ${p.type.toUpperCase()}!`, '#fde047');
+        const powerUpNames: Record<string, string> = { star: '星星', clock: '时钟', bomb: '炸弹', shovel: '铁锹', helmet: '头盔', repair: '维修包', scrap: '零件' };
+        this.vfx.spawnFloatingText(this.player.x, this.player.y - 25, `获得${powerUpNames[p.type] || p.type}！`, '#fde047');
         sounds.playPowerup();
         this.powerUps.splice(i, 1);
         continue;
@@ -815,7 +832,7 @@ export class Engine {
         if (distToPlayer < this.player.radius + b.radius) {
           if (this.player.isDashing) {
             // Perfect Tactical Dodge! Phase bullet through harmlessly!
-            this.vfx.spawnFloatingText(this.player.x, this.player.y - 25, '⚡ 完美闪避 (DODGE)', '#38bdf8');
+            this.vfx.spawnFloatingText(this.player.x, this.player.y - 25, '⚡ 完美闪避', '#38bdf8');
             this.vfx.spawnMuzzleFlash(b.x, b.y, b.angle, '#38bdf8');
             b.isAlive = false;
             this.projectiles.splice(i, 1);
@@ -945,7 +962,7 @@ export class Engine {
           e.takeDamage(22, this.vfx, Math.atan2(e.y - source.y, e.x - source.x), 3);
           e.applyStun(0.8);
           this.vfx.addLightningArc(source.x, source.y, e.x, e.y, '#38bdf8');
-          this.vfx.spawnFloatingText(e.x, e.y - 20, 'TESLA CHAIN!', '#38bdf8');
+          this.vfx.spawnFloatingText(e.x, e.y - 20, '特斯拉电弧链！', '#38bdf8');
           sounds.playTeslaArc();
           break;
         }
@@ -1035,11 +1052,11 @@ export class Engine {
     ctx.stroke();
 
     // Lock text & distance
-    ctx.font = 'bold 9px "Share Tech Mono", monospace';
+    ctx.font = 'bold 10px "Share Tech Mono", monospace';
     ctx.fillStyle = '#22c55e';
     ctx.textAlign = 'center';
     const dist = Math.round(Math.hypot(target.x - this.player.x, target.y - this.player.y));
-    ctx.fillText(`[ 🎯 LOCK ${dist}m ]`, 0, r + 14);
+    ctx.fillText(`[ 🎯 锁定 ${dist} ]`, 0, r + 14);
 
     ctx.restore();
   }

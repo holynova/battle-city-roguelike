@@ -4,6 +4,7 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
     <title>钢铁誓约：重装肉鸽坦克 | Battle City: Rogue Bastion</title>
+    <meta name="description" content="钢铁誓约：重装肉鸽坦克——杀戮尖塔式坦克 Roguelike，16 层战役、10 大战术地形、20+ 战备卡牌，守护老鹰要塞，粉碎歌利亚。" />
     <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🛡️</text></svg>" />
     <!-- Military & Sci-Fi Industrial Typography -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -102,6 +103,12 @@
         display: flex;
         gap: 10px;
         pointer-events: auto;
+        margin-left: auto;
+      }
+      @media (max-width: 640px) {
+        .status-indicator {
+          display: none;
+        }
       }
       .floating-btn {
         background: rgba(15, 23, 42, 0.75);
@@ -113,7 +120,7 @@
         border-radius: 20px;
         cursor: pointer;
         font-family: 'Chakra Petch', 'Share Tech Mono', monospace;
-        font-size: 12px;
+        font-size: 13px;
         font-weight: 700;
         transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
         box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
@@ -205,7 +212,7 @@
         border: 2px solid #38bdf8;
         clip-path: polygon(20% 0%, 80% 0%, 100% 20%, 100% 80%, 80% 100%, 20% 100%, 0% 80%, 0% 20%);
         color: white;
-        font-size: 14px;
+        font-size: 15px;
         font-weight: 700;
         display: flex;
         align-items: center;
@@ -229,11 +236,11 @@
       <div id="floating-top-bar">
         <div class="status-indicator">
           <span class="live-dot"></span>
-          <span class="hud-label">BASTION TACTICAL HUD</span>
+          <span class="hud-label">堡垒战术 HUD</span>
         </div>
         <div class="hud-btn-group">
-          <button id="auto-aim-btn" class="floating-btn active" title="快捷键: T">🎯 自动瞄准: 开 (T)</button>
-          <button id="audio-toggle-btn" class="floating-btn">🔊 BGM: 开</button>
+          <button id="auto-aim-btn" class="floating-btn active" title="快捷键: T">🎯 自动瞄准：开 (T)</button>
+          <button id="audio-toggle-btn" class="floating-btn">🔊 BGM：开</button>
         </div>
       </div>
 
@@ -285,7 +292,7 @@
         bindKey('m-dash', 'Shift', 'ShiftLeft');
       });
     </script>
-  <a href="https://github.com/holynova/battle-city-roguelike" target="_blank" rel="noopener" style="position:fixed;bottom:8px;right:12px;z-index:10000;font:12px system-ui;color:#cbd5e1;background:#111827;padding:6px 10px;border-radius:6px">GitHub</a>
+  <a href="https://github.com/holynova/battle-city-roguelike" target="_blank" rel="noopener" style="position:fixed;bottom:8px;right:12px;z-index:10000;font:13px system-ui;color:#cbd5e1;background:#111827;padding:6px 10px;border-radius:6px">GitHub</a>
 <script defer src="https://cloud.umami.is/script.js" data-website-id="e01c9f78-4607-4e60-b01c-77c8190b12b4"></script>
 </body>
 </html>

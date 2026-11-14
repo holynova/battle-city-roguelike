@@ -287,10 +287,10 @@ export class EliteTank extends Tank {
 
     // Overhead Boss Badge & Name
     ctx.save();
-    ctx.font = 'bold 11px "Chakra Petch", system-ui, sans-serif';
+    ctx.font = 'bold 12px "Chakra Petch", system-ui, sans-serif';
     ctx.textAlign = 'center';
     ctx.fillStyle = this.color;
-    ctx.fillText(`☠ ${this.titleZh} · ${this.nameZh}`, this.x, this.y - 44);
+    ctx.fillText(`☠ ${this.titleZh} — ${this.nameZh}`, this.x, this.y - 44);
     this.renderHealthBar(ctx, 64, 34);
     ctx.restore();
   }

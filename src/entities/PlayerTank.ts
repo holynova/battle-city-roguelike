@@ -311,7 +311,7 @@ export class PlayerTank extends Tank {
     }
 
     vfx.spawnExplosion(this.x, this.y, false);
-    vfx.spawnFloatingText(this.x, this.y - 25, '⚡ 战术闪避 (DODGE)', '#38bdf8');
+    vfx.spawnFloatingText(this.x, this.y - 25, '⚡ 战术闪避', '#38bdf8');
     sounds.playDash();
     return true;
   }

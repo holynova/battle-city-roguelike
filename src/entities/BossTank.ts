@@ -50,14 +50,14 @@ export class BossTank extends Tank {
       this.phase = 3;
       this.speed = 95;
       vfx.spawnExplosion(this.x, this.y, true);
-      vfx.spawnFloatingText(this.x, this.y - 45, '⚠️ CRITICAL OVERDRIVE: PHASE 3 ⚠️', '#ef4444');
+      vfx.spawnFloatingText(this.x, this.y - 45, '⚠️ 极限超载：第 3 阶段 ⚠️', '#ef4444');
       sounds.playExplosion(true);
       sounds.playBaseAlarm();
     } else if (hpRatio <= 0.65 && this.phase < 2) {
       this.phase = 2;
       this.speed = 80;
       vfx.spawnExplosion(this.x, this.y, true);
-      vfx.spawnFloatingText(this.x, this.y - 45, '⚠️ GOLIATH ENRAGED: PHASE 2 ⚠️', '#f59e0b');
+      vfx.spawnFloatingText(this.x, this.y - 45, '⚠️ 歌利亚狂怒：第 2 阶段 ⚠️', '#f59e0b');
       sounds.playExplosion(true);
       sounds.playBaseAlarm();
     }
@@ -256,10 +256,10 @@ export class BossTank extends Tank {
 
     // Overhead Boss Health Bar
     ctx.save();
-    ctx.font = 'bold 13px "Chakra Petch", system-ui, sans-serif';
+    ctx.font = 'bold 14px "Chakra Petch", system-ui, sans-serif';
     ctx.textAlign = 'center';
     ctx.fillStyle = auraColor;
-    ctx.fillText(`👑 陆上巡洋舰「歌利亚」 [PHASE ${this.phase}]`, this.x, this.y - 65);
+    ctx.fillText(`👑 陆上巡洋舰「歌利亚」 [第 ${this.phase} 阶段]`, this.x, this.y - 65);
     this.renderHealthBar(ctx, 96, 50);
     ctx.restore();
   }
