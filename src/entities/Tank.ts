@@ -58,7 +58,7 @@ export abstract class Tank {
       if (this.burnTickTimer >= 0.5) {
         this.burnTickTimer = 0;
         this.takeDamage(4, vfx);
-        vfx.spawnFloatingText(this.x, this.y - 15, 'BURN -4', '#ea580c');
+        vfx.spawnFloatingText(this.x, this.y - 15, '燃烧 -4', '#ea580c');
       }
     }
   }
@@ -98,7 +98,7 @@ export abstract class Tank {
       if (this.shield >= dmg) {
         this.shield -= dmg;
         dmg = 0;
-        vfx.spawnFloatingText(this.x, this.y - 15, 'SHIELD -' + amount, '#38bdf8');
+        vfx.spawnFloatingText(this.x, this.y - 15, '护盾 -' + amount, '#38bdf8');
       } else {
         dmg -= this.shield;
         this.shield = 0;

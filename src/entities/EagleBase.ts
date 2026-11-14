@@ -58,11 +58,11 @@ export class EagleBase {
       if (this.shield >= remaining) {
         this.shield -= remaining;
         remaining = 0;
-        vfx.spawnFloatingText(this.x, this.y - 20, 'SHIELD -' + amount, '#38bdf8');
+        vfx.spawnFloatingText(this.x, this.y - 20, '护盾 -' + amount, '#38bdf8');
       } else {
         remaining -= this.shield;
         this.shield = 0;
-        vfx.spawnFloatingText(this.x, this.y - 20, 'SHIELD BREAK!', '#ef4444');
+        vfx.spawnFloatingText(this.x, this.y - 20, '护盾破裂！', '#ef4444');
       }
     }
 

@@ -359,7 +359,7 @@ export class ParticleFX {
     for (const ft of this.floatingTexts) {
       ctx.save();
       ctx.globalAlpha = ft.alpha;
-      ctx.font = 'bold 15px system-ui, -apple-system, sans-serif';
+      ctx.font = 'bold 14px system-ui, -apple-system, sans-serif';
       ctx.textAlign = 'center';
       // Outline
       ctx.strokeStyle = '#000000';

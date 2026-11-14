@@ -44,7 +44,7 @@ export class CampaignMap {
     // Floor 1: Skirmish / Event
     this.floors.push([
       { id: 'node_1_0', floor: 1, col: 0, type: 'battle', nameZh: '热带密林', descZh: '大面积丛林伪装，暗处猎杀敌车', icon: '⚔️', nextIds: [], visited: false, available: false },
-      { id: 'node_1_1', floor: 1, col: 1, type: 'event', nameZh: '战地机密', descZh: '截获军用秘密信号与战损特种原型车', icon: '❓', nextIds: [], visited: false, available: false },
+      { id: 'node_1_1', floor: 1, col: 1, type: 'event', nameZh: '战地机密', descZh: '发现废弃的原型战车，拆解它或绕行离开', icon: '❓', nextIds: [], visited: false, available: false },
       { id: 'node_1_2', floor: 1, col: 2, type: 'battle', nameZh: '纵深战壕', descZh: '坚固战壕阵地与交叉火力网', icon: '⚔️', nextIds: [], visited: false, available: false }
     ]);
 
@@ -63,7 +63,7 @@ export class CampaignMap {
         col: 0,
         type: 'elite',
         nameZh: '鬼火指挥所',
-        descZh: '【精英首领】烈焰掠食者指挥官：三向散射爆炎炮与高爆跳雷阵地！',
+        descZh: '【精英首领】鬼火掠食者：三向散射爆炎炮与高爆跳雷阵地！',
         icon: '💀',
         nextIds: [],
         visited: false,
@@ -76,7 +76,7 @@ export class CampaignMap {
         col: 1,
         type: 'elite',
         nameZh: '熔岩堡垒',
-        descZh: '【精英首领】烈焰掠食者指挥官：三向散射爆炎炮与高爆跳雷阵地！',
+        descZh: '【精英首领】鬼火掠食者：三向散射爆炎炮与高爆跳雷阵地！',
         icon: '💀',
         nextIds: [],
         visited: false,
@@ -88,7 +88,7 @@ export class CampaignMap {
     // Floor 4: Rest / Supply
     this.floors.push([
       { id: 'node_4_0', floor: 4, col: 0, type: 'rest', nameZh: '战地篝火', descZh: '休整维修战车装甲并校准主炮', icon: '⛺', nextIds: [], visited: false, available: false },
-      { id: 'node_4_1', floor: 4, col: 1, type: 'event', nameZh: '前线遗迹', descZh: '发掘废弃的战地装甲实验核心', icon: '❓', nextIds: [], visited: false, available: false },
+      { id: 'node_4_1', floor: 4, col: 1, type: 'event', nameZh: '前线遗迹', descZh: '发现废弃的原型战车，拆解它或绕行离开', icon: '❓', nextIds: [], visited: false, available: false },
       { id: 'node_4_2', floor: 4, col: 2, type: 'rest', nameZh: '野战车库', descZh: '紧急维修战车装甲并强化老鹰防线', icon: '⛺', nextIds: [], visited: false, available: false }
     ]);
 
@@ -139,7 +139,7 @@ export class CampaignMap {
     // Floor 8: Rest / Event
     this.floors.push([
       { id: 'node_8_0', floor: 8, col: 0, type: 'rest', nameZh: '前线庇护所', descZh: '全装甲纳米自愈与要塞防空加固', icon: '⛺', nextIds: [], visited: false, available: false },
-      { id: 'node_8_1', floor: 8, col: 1, type: 'event', nameZh: '军械试验台', descZh: '过载调试主武器，换取极限射速提升', icon: '❓', nextIds: [], visited: false, available: false },
+      { id: 'node_8_1', floor: 8, col: 1, type: 'event', nameZh: '军械试验台', descZh: '发现废弃的原型战车，拆解它或绕行离开', icon: '❓', nextIds: [], visited: false, available: false },
       { id: 'node_8_2', floor: 8, col: 2, type: 'rest', nameZh: '补给避风港', descZh: '全面检修装甲并为要塞充能', icon: '⛺', nextIds: [], visited: false, available: false }
     ]);
 
@@ -153,7 +153,7 @@ export class CampaignMap {
     this.floors.push([
       { id: 'node_10_0', floor: 10, col: 0, type: 'shop', nameZh: '深渊军需站', descZh: '选购终局史诗模块与武器突破升级', icon: '🛒', nextIds: [], visited: false, available: false },
       { id: 'node_10_1', floor: 10, col: 1, type: 'battle', nameZh: '反应堆外围', descZh: '辐射废墟与敌方王牌装甲连激战', icon: '⚔️', nextIds: [], visited: false, available: false },
-      { id: 'node_10_2', floor: 10, col: 2, type: 'event', nameZh: '紧急广播', descZh: '拦截敌方巡洋舰调度指令获得密报', icon: '❓', nextIds: [], visited: false, available: false }
+      { id: 'node_10_2', floor: 10, col: 2, type: 'event', nameZh: '紧急广播', descZh: '发现废弃的原型战车，拆解它或绕行离开', icon: '❓', nextIds: [], visited: false, available: false }
     ]);
 
     // Floor 11: [ELITE 3: 虚空引力巨擘 (Void Dreadnought)]
@@ -164,7 +164,7 @@ export class CampaignMap {
         col: 0,
         type: 'elite',
         nameZh: '虚空奇点要塞',
-        descZh: '【精英首领】虚空引力使徒：旋转弹幕繁星风暴与黑洞引力弹！',
+        descZh: '【精英首领】虚空引力巨擘：旋转弹幕繁星风暴与黑洞引力弹！',
         icon: '💀',
         nextIds: [],
         visited: false,
@@ -177,7 +177,7 @@ export class CampaignMap {
         col: 1,
         type: 'elite',
         nameZh: '重力塌缩核心',
-        descZh: '【精英首领】虚空引力使徒：旋转弹幕繁星风暴与黑洞引力弹！',
+        descZh: '【精英首领】虚空引力巨擘：旋转弹幕繁星风暴与黑洞引力弹！',
         icon: '💀',
         nextIds: [],
         visited: false,
@@ -194,7 +194,7 @@ export class CampaignMap {
 
     // Floor 13: Endgame Final Shop
     this.floors.push([
-      { id: 'node_13_0', floor: 13, col: 0, type: 'shop', nameZh: '军团黑市总站', descZh: '最后军需倾销！将所有废铁零件转化为终极战力', icon: '🛒', nextIds: [], visited: false, available: false },
+      { id: 'node_13_0', floor: 13, col: 0, type: 'shop', nameZh: '军团黑市总站', descZh: '最后军需倾销！将所有零件转化为终极战力', icon: '🛒', nextIds: [], visited: false, available: false },
       { id: 'node_13_1', floor: 13, col: 1, type: 'rest', nameZh: '最后的篝火', descZh: '战役终章前的最后装甲整备与战意激发', icon: '⛺', nextIds: [], visited: false, available: false }
     ]);
 
@@ -210,7 +210,7 @@ export class CampaignMap {
       floor: 15,
       col: 1,
       type: 'boss',
-      nameZh: '终极决战·歌利亚',
+      nameZh: '终极决战 — 歌利亚',
       descZh: '【终局决战】陆上巡洋舰「歌利亚」：三阶全域弹幕、扫射激光与全屏重炮！',
       icon: '👑',
       nextIds: [],

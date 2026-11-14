@@ -3,7 +3,7 @@
  * Tracks scraps, passive chips, and stacking weapon unlock & upgrades (Lv.1 to Lv.5)
  */
 
-import { UpgradeChip, ALL_UPGRADES } from './Upgrades';
+import { UpgradeChip, ALL_UPGRADES, UNIMPLEMENTED_CHIPS } from './Upgrades';
 
 export class Inventory {
   public scraps: number = 0;
@@ -93,8 +93,13 @@ export class Inventory {
         return true;
       }
 
-      // Don't repeat unique single-purchase non-stacking chips if already owned
-      if ((c.id === 'steel_breaker' || c.id === 'hover_chassis' || c.id === 'eagle_point_defense' || c.id === 'eagle_nano_shield') && this.hasChip(c.id)) {
+      // Never offer chips with no implemented effect.
+      if (UNIMPLEMENTED_CHIPS.has(c.id)) {
+        return false;
+      }
+      // Don't repeat owned non-weapon chips: every chip effect is a boolean
+      // hasChip check, so a duplicate does nothing and wastes the draft pick.
+      if (this.hasChip(c.id)) {
         return false;
       }
       return true;
@@ -112,7 +117,7 @@ export class Inventory {
           return {
             ...chip,
             nameZh: `【升级 Lv.${currentLvl + 1}】${chip.nameZh}`,
-            descriptionZh: `强化武器性能：全伤害 +35%、冷却缩减 16%，并提升元素特效范围与持续时间（当前 Lv.${currentLvl} ➔ Lv.${currentLvl + 1}）！`
+            descriptionZh: `强化武器性能：全伤害 +35%、装填间隔缩短（当前 Lv.${currentLvl} ➔ Lv.${currentLvl + 1}）。`
           };
         } else {
           return {
