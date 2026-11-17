@@ -1,40 +1,67 @@
-# Rogue Bastion · 坦克要塞
+<p align="center">
+  <img src="./assets/readme/hero.svg" width="100%" alt="Battle City: Rogue Bastion · 钢铁誓约 — FC 经典坦克大战 × Roguelike 高清重制：双轴平板坦克、6 大元素主炮、老鹰基地 2.0、16 层尖塔战役地图">
+</p>
 
-驾驶坦克守卫老鹰基地，在战役中切换元素主炮并选择强化。
+<p align="center">
+  <a href="https://battle-city-roguelike.xiaosang.cc/">▶ 在线玩 Play Online</a>
+  ·
+  <a href="https://github.com/holynova/battle-city-roguelike">GitHub 仓库</a>
+</p>
 
-A browser tank roguelite combining base defense, elemental weapons and campaign upgrades.
+FC 经典《坦克大战》× Roguelike 的高清重制版：驾驶坦克守卫老鹰基地，底盘与炮塔双轴独立控制，在 16 层尖塔战役地图上推进，解锁 6 种元素主炮、收集 26 种改装与武器强化，最终挑战第 16 层的终局 Boss「歌利亚」。TypeScript + Vite + Canvas，高 DPI 渲染，Web Audio 程序化音效。
 
-[在线体验](https://battle-city-roguelike.xiaosang.cc/) · [源码](https://github.com/holynova/battle-city-roguelike)
+A Battle City × roguelite remake in HD: drive a tank to defend the Eagle base with independent chassis and turret control, climb a 16-floor campaign map, unlock 6 elemental cannons and 26 upgrades, and face the final boss "Goliath" on floor 16. TypeScript + Vite + Canvas, high-DPI rendering, procedural Web Audio sound.
 
-![Rogue Bastion · 坦克要塞：真实页面截图](./assets/readme/screenshot.png)
+## 截图 / Screenshots
 
-## 可以做什么
+<p align="center">
+  <img src="./assets/readme/screenshot.png" width="800" alt="实战画面：莱茵水陆阻击战 Floor 1/16，砖墙、河流与森林地形，底部武器栏与老鹰基地护盾 HUD">
+</p>
 
-- 独立控制底盘移动与炮塔瞄准。
-- 保护基地，选择战利品与战术芯片。
+## 玩法 / How to Play
 
-## 怎么玩
+- **双轴控制**：WASD / 方向键驾驶底盘，鼠标 360° 瞄准炮塔，左键或空格开火；Shift / F / Q 冲刺（带无敌帧，可穿弹幕）；T 开关自动瞄准。
+- **守卫老鹰基地**：基地有独立护盾（50 点）与装甲，不再是 FC 版"一发冷枪秒杀"；可加装近防加特林、纳米护盾等防御模块。
+- **6 种元素主炮**：动能穿甲炮、棱镜激光、特斯拉球状闪电、飓风奇点炮、凝固汽油迫击炮、冷冻新星；数字键 1–6 或滚轮切换，武器可随战役升级叠层。
+- **26 种强化**：高速弹、强化装甲、双管炮、弹跳弹、吸血清道夫、悬浮底盘、钢芯破甲弹等，自由联动构筑。
+- **16 层战役地图**：39 个节点，遭遇战、精英战、事件、商店、休整营地与 Boss 战分支推进；第 16 层终局决战：陆上巡洋舰「歌利亚」，三阶全域弹幕、扫射激光与全屏重炮。
 
-WASD / 方向键驾驶，鼠标瞄准，鼠标左键开火；Shift冲刺，数字键或滚轮切换已解锁武器。
-
-## 本地运行
+## 本地运行 / Run Locally
 
 ```bash
 npm ci
-npm run dev
-# 生成生产产物
-npm run build
+npm run dev        # 开发服务器
+npm run build      # 生成生产产物
 ```
 
-许可证见 [LICENSE](LICENSE)。
+## 技术 / Tech
 
-<img src="./assets/readme/qr.png" width="144" alt="扫码打开https://battle-city-roguelike.xiaosang.cc/">
+- TypeScript + Vite，Canvas 高 DPI 渲染（1080P / 2K / 4K / Retina 均保持锐利边缘）。
+- 程序化 Web Audio 音效与音乐：零外部音频依赖，炮击、履带、EMP、警报全部代码合成。
+- 粒子与打击感：炮口闪光照亮地形、碎砖 3D 破片、履带压痕、爆炸冲击波与屏幕微震。
 
-## 发布
-
-```bash
-npm run build
-npx --yes wrangler@4.128.0 deploy --config wrangler.jsonc
+```
+src/core/Engine.ts      游戏主循环、输入、Tick、子弹时间
+src/entities/           玩家 / 敌军 / 精英 / Boss / 老鹰基地 / 弹道 / 掉落
+src/map/TileMap.ts      砖墙 / 钢墙 / 河流 / 森林等地形
+src/graphics/           HD 矢量渲染、粒子特效、战术图标
+src/roguelite/          战役地图、26 种强化、战利品库存
+src/ui/                 HUD、战术覆盖层（选关 / 强化 / 商店 / 结算）
+src/audio/              程序化音效与音乐引擎
+public/assets/images/   标题图、卡牌立绘、Boss 肖像、地形贴图
 ```
 
-从 `main` 同一提交在本地手动发布到Cloudflare Workers。正式地址：[https://battle-city-roguelike.xiaosang.cc/](https://battle-city-roguelike.xiaosang.cc/)。
+## English
+
+**Battle City: Rogue Bastion** — a Battle City × roguelite remake in HD. Defend the Eagle base with dual-axis tank control (chassis + independently rotating turret), climb a 16-floor campaign map, and take down the final boss "Goliath".
+
+- **Controls**: WASD / arrows to drive, mouse to aim the turret, left-click or Space to fire; Shift / F / Q to dash (with i-frames); T toggles auto-aim; keys 1–6 or scroll wheel switch weapons.
+- **Eagle Bastion 2.0**: the base has its own shield (50) and armor — no more one-shot losses — plus defensive modules like point-defense gatling and nano-shield.
+- **6 elemental cannons**: kinetic AP, prism laser, Tesla ball lightning, gale singularity, napalm mortar, cryo nova — unlockable and upgradeable across the run.
+- **26 upgrades** and a 39-node campaign map (battles, elites, events, shops, rest sites, bosses).
+- **Tech**: TypeScript + Vite, high-DPI Canvas rendering, fully procedural Web Audio sound and music, zero external audio assets.
+- **Run it**: `npm ci && npm run dev`.
+
+## 许可 / License
+
+MIT，见 `LICENSE`。
