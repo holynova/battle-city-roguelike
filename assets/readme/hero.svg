@@ -1,5 +1,6 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 440" width="100%" height="100%">
   <title>Battle City: Rogue Bastion - Project Hero</title>
+  <desc>深色战术 HUD 风标题：BATTLE CITY ROGUE BASTION，钢铁誓约 · 重装肉鸽坦克；右侧是雷达火控面板、老鹰基地 2.0 状态与 6 元素武器矩阵。</desc>
   <defs>
     <!-- Background Gradients -->
     <linearGradient id="bgGradient" x1="0%" y1="0%" x2="100%" y2="100%">
@@ -111,7 +112,7 @@
   <!-- Tech Stack Metadata Strip -->
   <g transform="translate(58, 362)">
     <rect x="0" y="0" width="466" height="38" rx="8" fill="#0d141e" stroke="#1c2b3d" stroke-width="1" />
-    <text x="16" y="24" font-family="'SF Mono', Monaco, Consolas, monospace" font-size="12" font-weight="600" fill="#4d6b8c">ENGINE STACK:</text>
+    <text x="16" y="24" font-family="'SF Mono', Monaco, Consolas, monospace" font-size="12" font-weight="600" fill="#7d9bb8">ENGINE STACK:</text>
     <text x="126" y="24" font-family="'SF Mono', Monaco, Consolas, monospace" font-size="12" font-weight="600" fill="#cad5e2">TypeScript</text>
     <circle cx="218" cy="19" r="2.5" fill="#ff9900" />
     <text x="232" y="24" font-family="'SF Mono', Monaco, Consolas, monospace" font-size="12" font-weight="600" fill="#cad5e2">High-DPI Canvas</text>
@@ -223,13 +224,13 @@
 
       <!-- HP Bar -->
       <text x="12" y="42" font-family="-apple-system, BlinkMacSystemFont, sans-serif" font-size="9" font-weight="600" fill="#8aa2be">FORT HULL</text>
-      <rect x="70" y="34" width="104" height="8" rx="3" fill="#15212d" />
-      <rect x="70" y="34" width="104" height="8" rx="3" fill="#6fe3b0" />
+      <g><rect x="70" y="34" width="104" height="8" rx="3" fill="#15212d" />
+      <rect x="70" y="34" width="104" height="8" rx="3" fill="#6fe3b0" /></g>
 
       <!-- Shield Bar -->
       <text x="12" y="62" font-family="-apple-system, BlinkMacSystemFont, sans-serif" font-size="9" font-weight="600" fill="#8aa2be">NANO SHIELD</text>
-      <rect x="70" y="54" width="104" height="8" rx="3" fill="#15212d" />
-      <rect x="70" y="54" width="86" height="8" rx="3" fill="#00e5ff" />
+      <g><rect x="70" y="54" width="104" height="8" rx="3" fill="#15212d" />
+      <rect x="70" y="54" width="86" height="8" rx="3" fill="#00e5ff" /></g>
 
       <!-- Defense Spec -->
       <rect x="12" y="74" width="162" height="24" rx="4" fill="#111d28" stroke="#1b3147" stroke-width="0.8" />
