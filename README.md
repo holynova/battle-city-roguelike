@@ -1,24 +1,24 @@
+<p align="right"><a href="README.en.md">English</a></p>
+
 <p align="center">
   <img src="./assets/readme/hero.svg" width="100%" alt="Battle City: Rogue Bastion · 钢铁誓约 — FC 经典坦克大战 × Roguelike 高清重制：双轴平板坦克、6 大元素主炮、老鹰基地 2.0、16 层尖塔战役地图">
 </p>
 
 <p align="center">
-  <a href="https://battle-city-roguelike.xiaosang.cc/">▶ 在线玩 Play Online</a>
+  <a href="https://battle-city-roguelike.xiaosang.cc/">▶ 在线玩</a>
   ·
   <a href="https://github.com/holynova/battle-city-roguelike">GitHub 仓库</a>
 </p>
 
 FC 经典《坦克大战》× Roguelike 的高清重制版：驾驶坦克守卫老鹰基地，底盘与炮塔双轴独立控制，在 16 层尖塔战役地图上推进，解锁 6 种元素主炮、收集 26 种改装与武器强化，最终挑战第 16 层的终局 Boss「歌利亚」。TypeScript + Vite + Canvas，高 DPI 渲染，Web Audio 程序化音效。
 
-A Battle City × roguelite remake in HD: drive a tank to defend the Eagle base with independent chassis and turret control, climb a 16-floor campaign map, unlock 6 elemental cannons and 26 upgrades, and face the final boss "Goliath" on floor 16. TypeScript + Vite + Canvas, high-DPI rendering, procedural Web Audio sound.
-
-## 截图 / Screenshots
+## 截图
 
 <p align="center">
   <img src="./assets/readme/screenshot.png" width="800" alt="实战画面：莱茵水陆阻击战 Floor 1/16，砖墙、河流与森林地形，底部武器栏与老鹰基地护盾 HUD">
 </p>
 
-## 玩法 / How to Play
+## 玩法
 
 - **双轴控制**：WASD / 方向键驾驶底盘，鼠标 360° 瞄准炮塔，左键或空格开火；Shift / F / Q 冲刺（带无敌帧，可穿弹幕）；T 开关自动瞄准。
 - **守卫老鹰基地**：基地有独立护盾（50 点）与装甲，不再是 FC 版"一发冷枪秒杀"；可加装近防加特林、纳米护盾等防御模块。
@@ -26,7 +26,7 @@ A Battle City × roguelite remake in HD: drive a tank to defend the Eagle base w
 - **26 种强化**：高速弹、强化装甲、双管炮、弹跳弹、吸血清道夫、悬浮底盘、钢芯破甲弹等，自由联动构筑。
 - **16 层战役地图**：39 个节点，遭遇战、精英战、事件、商店、休整营地与 Boss 战分支推进；第 16 层终局决战：陆上巡洋舰「歌利亚」，三阶全域弹幕、扫射激光与全屏重炮。
 
-## 本地运行 / Run Locally
+## 本地运行
 
 ```bash
 npm ci
@@ -34,7 +34,7 @@ npm run dev        # 开发服务器
 npm run build      # 生成生产产物
 ```
 
-## 技术 / Tech
+## 技术
 
 - TypeScript + Vite，Canvas 高 DPI 渲染（1080P / 2K / 4K / Retina 均保持锐利边缘）。
 - 程序化 Web Audio 音效与音乐：零外部音频依赖，炮击、履带、EMP、警报全部代码合成。
@@ -51,17 +51,6 @@ src/audio/              程序化音效与音乐引擎
 public/assets/images/   标题图、卡牌立绘、Boss 肖像、地形贴图
 ```
 
-## English
-
-**Battle City: Rogue Bastion** — a Battle City × roguelite remake in HD. Defend the Eagle base with dual-axis tank control (chassis + independently rotating turret), climb a 16-floor campaign map, and take down the final boss "Goliath".
-
-- **Controls**: WASD / arrows to drive, mouse to aim the turret, left-click or Space to fire; Shift / F / Q to dash (with i-frames); T toggles auto-aim; keys 1–6 or scroll wheel switch weapons.
-- **Eagle Bastion 2.0**: the base has its own shield (50) and armor — no more one-shot losses — plus defensive modules like point-defense gatling and nano-shield.
-- **6 elemental cannons**: kinetic AP, prism laser, Tesla ball lightning, gale singularity, napalm mortar, cryo nova — unlockable and upgradeable across the run.
-- **26 upgrades** and a 39-node campaign map (battles, elites, events, shops, rest sites, bosses).
-- **Tech**: TypeScript + Vite, high-DPI Canvas rendering, fully procedural Web Audio sound and music, zero external audio assets.
-- **Run it**: `npm ci && npm run dev`.
-
-## 许可 / License
+## 许可
 
 MIT，见 `LICENSE`。
